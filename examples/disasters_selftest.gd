@@ -10,7 +10,7 @@ extends Node3D
 ## this family has shipped more than once.
 
 const EXPECTED_SECTIONS := 11
-const EXPECTED_CHECKS := 115
+const EXPECTED_CHECKS := 116
 
 var _passed := 0
 var _failed := 0
@@ -528,6 +528,11 @@ func _replication() -> void:
 	_check(probe.hp <= 93.001 and probe.pushes == 1, "damage_via and push_via reach the target's own methods")
 	wired.free()
 	probe.queue_free()
+
+	var through_json: Variant = JSON.parse_string(JSON.stringify(ev.to_wire()))
+	var text_late := _world(false)["manager"] as DotDisasterManager
+	var text_res := text_late.receive(through_json)
+	_check(text_res.ok and text_late.find_event(ev.id) != null, "a record that went through JSON (ints as floats) is accepted")
 
 	var forged := ev.to_wire()
 	forged["n"] = INF

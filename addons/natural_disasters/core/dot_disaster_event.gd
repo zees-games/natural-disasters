@@ -102,7 +102,9 @@ static func from_wire(msg: Dictionary) -> DotResult:
 			return DotResult.fail(DotError.CODE_PARSE, "A disaster field is not a finite number.")
 		nums.append(float(v))
 
-	if not (msg["i"] is int) or not (msg["s"] is int) or not (msg["k"] is String):
+	# A JSON carrier (a host that sends text) turns every integer into a float, so a whole
+	# float is an id; a fraction still is not.
+	if not _whole(msg["i"]) or not _whole(msg["s"]) or not (msg["k"] is String):
 		return DotResult.fail(DotError.CODE_PARSE, "A disaster id, seed or kind has the wrong type.")
 
 	var ev := DotDisasterEvent.new()
@@ -116,6 +118,10 @@ static func from_wire(msg: Dictionary) -> DotResult:
 	ev.heading = nums[4]
 	ev.origin = Vector3(nums[5], nums[6], nums[7])
 	return DotResult.success(ev)
+
+
+static func _whole(v: Variant) -> bool:
+	return v is int or (v is float and is_finite(v) and absf(v) < 9007199254740992.0 and v == floorf(v))
 
 
 func describe() -> String:

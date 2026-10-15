@@ -38,7 +38,7 @@ Layered like the rest of the family: exported defaults, JSON file, environment (
 
 ```bash
 godot --headless --path . --import
-timeout 300 godot --headless --path . res://examples/disasters_selftest.tscn   # 115 checks
+timeout 300 godot --headless --path . res://examples/disasters_selftest.tscn   # 116 checks
 xvfb-run -a godot --path . res://examples/disasters_demo.tscn -- --kind tornado --shot out.png
 ```
 
