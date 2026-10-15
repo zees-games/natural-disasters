@@ -10,7 +10,7 @@ extends Node3D
 ## this family has shipped more than once.
 
 const EXPECTED_SECTIONS := 11
-const EXPECTED_CHECKS := 110
+const EXPECTED_CHECKS := 115
 
 var _passed := 0
 var _failed := 0
@@ -508,6 +508,26 @@ func _replication() -> void:
 	_check(late.active_count() == 2 and late.is_active(&"thunderstorm"), "a late joiner is brought up to date from the snapshot")
 	late.receive(server.snapshot()[0])
 	_check(late.active_count() == 2, "and the same snapshot twice adds nothing")
+
+	var joined: Array = []
+	var n := server.send_snapshot(func(msg: Dictionary) -> void: joined.append(msg))
+	_check(n == 2 and joined.size() == 2, "send_snapshot hands each running disaster to the joiner")
+	_check(late.send_snapshot(func(_m: Dictionary) -> void: joined.append(null)) == 0 and joined.size() == 2,
+		"and a client with no authority sends none")
+	var wired := DotDisasterManager.new()
+	var got: Array = []
+	var wr := wired.wire({"damage": DotDisasterManager.damage_via(&"take_damage"),
+		"push": DotDisasterManager.push_via(&"apply_disaster_push"), "send": func(_m: Dictionary) -> void: got.append(1)})
+	_check(wr.ok and wired.damage_fn.is_valid() and wired.player_push_fn.is_valid() and wired.send_fn.is_valid(),
+		"wire assigns the hooks by name")
+	var bad := wired.wire({"dammage": Callable()})
+	_check(not bad.ok and bad.error.code == DotError.CODE_INVALID, "wire refuses an unknown hook name")
+	var probe := _player(server_w["root"], Vector3(500.0, 0.0, 500.0))
+	wired.damage_fn.call(probe, 7.0, Vector3.ZERO, ev)
+	wired.player_push_fn.call(probe, Vector3(1, 0, 0), ev)
+	_check(probe.hp <= 93.001 and probe.pushes == 1, "damage_via and push_via reach the target's own methods")
+	wired.free()
+	probe.queue_free()
 
 	var forged := ev.to_wire()
 	forged["n"] = INF

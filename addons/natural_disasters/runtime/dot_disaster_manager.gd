@@ -349,8 +349,59 @@ func receive(msg: Dictionary) -> DotResult:
 			return DotResult.success(target)
 
 
+## The late-join hook: the host calls this once when a player joins, with a callable that
+## delivers one dictionary to that player alone (`(msg: Dictionary) -> void`, usually the
+## game's send-to-peer). Returns how many messages went. Without it a player who arrives in
+## the middle of a storm sees clear sky until the next disaster starts, because a `start` is
+## sent once. A client without authority sends nothing.
+func send_snapshot(deliver: Callable) -> int:
+	if not authority or not deliver.is_valid():
+		return 0
+	var sent := 0
+	for msg in snapshot():
+		deliver.call(msg)
+		sent += 1
+	return sent
+
+
+## Assigns hooks from one dictionary, so a host wires everything in one place:
+## `manager.wire({"damage": fn, "push": fn, "send": fn, "bodies": fn, "players": fn, "origin": fn})`.
+## An unknown key is [code]CODE_INVALID[/code] and nothing is assigned, so a typo is not a
+## silently missing hook.
+func wire(hooks: Dictionary) -> DotResult:
+	var names := {
+		"send": "send_fn", "damage": "damage_fn", "push": "player_push_fn",
+		"bodies": "bodies_fn", "players": "players_fn", "origin": "origin_fn",
+	}
+	for key in hooks:
+		if not names.has(String(key)):
+			return DotResult.fail(DotError.CODE_INVALID, "No such disaster hook.", String(key))
+		if not (hooks[key] is Callable):
+			return DotResult.fail(DotError.CODE_INVALID, "A disaster hook must be a Callable.", String(key))
+	for key in hooks:
+		set(names[String(key)], hooks[key])
+	return DotResult.success(self)
+
+
+## A `damage_fn` that calls `target.<method>(amount)`, for a host whose health lives behind
+## one method (`hurt`, `apply_damage`). Targets without it are skipped.
+static func damage_via(method: StringName) -> Callable:
+	return func(target: Object, amount: float, _at: Vector3, _ev: DotDisasterEvent) -> void:
+		if is_instance_valid(target) and target.has_method(method):
+			target.call(method, amount)
+
+
+## A `player_push_fn` that calls `player.<method>(velocity_change)`, for a controller that
+## owns its velocity (a push written straight into a prediction-corrected body is undone on
+## the next correction). Players without it are skipped.
+static func push_via(method: StringName) -> Callable:
+	return func(player: Node3D, dv: Vector3, _ev: DotDisasterEvent) -> void:
+		if is_instance_valid(player) and player.has_method(method):
+			player.call(method, dv)
+
+
 ## Messages that bring a client that joined late up to date: one `start` per running event,
-## with its elapsed time.
+## with its elapsed time. [method send_snapshot] is the hook that sends them.
 func snapshot() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for ev in _events:

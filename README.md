@@ -16,7 +16,7 @@ add_child(disasters)
 disasters.start(&"tornado", {"origin": Vector3(0, 0, 0), "duration": 60.0})   # returns a DotResult
 ```
 
-On a client, feed every message the authority sent to `disasters.receive(msg)` (a `DotResult`; forged or malformed records are refused) and call `disasters.snapshot()` on the authority for a late joiner. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. dot-net is not imported: carry the dictionaries over whatever channel the game already has.
+On a client, feed every message the authority sent to `disasters.receive(msg)` (a `DotResult`; forged or malformed records are refused) and, when a player joins mid-disaster, call `disasters.send_snapshot(func(msg): send_to_that_peer(msg))` on the authority: it hands the callable one `start` per running disaster (`snapshot()` returns the same list). A host can set every hook in one line, `disasters.wire({"damage": ..., "push": ..., "send": ..., "bodies": ..., "players": ..., "origin": ...})` (a typo is `CODE_INVALID`), and `DotDisasterManager.damage_via(&"hurt")` / `push_via(&"add_push")` build the two hooks that just call a method on the target. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. dot-net is not imported: carry the dictionaries over whatever channel the game already has.
 
 Nodes (all `Dot`-prefixed, no autoloads, hosts found through `DotNodeRef`):
 
@@ -38,7 +38,7 @@ Layered like the rest of the family: exported defaults, JSON file, environment (
 
 ```bash
 godot --headless --path . --import
-timeout 300 godot --headless --path . res://examples/disasters_selftest.tscn   # 112 checks
+timeout 300 godot --headless --path . res://examples/disasters_selftest.tscn   # 115 checks
 xvfb-run -a godot --path . res://examples/disasters_demo.tscn -- --kind tornado --shot out.png
 ```
 
