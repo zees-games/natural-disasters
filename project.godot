@@ -1,0 +1,37 @@
+; Engine configuration file.
+; It's best edited using the editor UI and not directly,
+; since the parameters that go here are not all obvious.
+;
+; Format:
+;   [section] ; section goes between []
+;   param=value ; assign values to parameters
+
+config_version=5
+
+[application]
+
+config/name="natural-disasters"
+config/description="Server-authoritative natural disasters for any game: thunderstorm, tornado, blizzard and earthquake, scheduled by a cvar-driven director, replicated as one small record each, with a registration API for games to add their own."
+run/main_scene="res://examples/disasters_selftest.tscn"
+config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=1280
+window/size/viewport_height=720
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/natural_disasters/plugin.cfg")
+
+[importer_defaults]
+
+texture={
+"detect_3d/compress_to": 0
+}
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"

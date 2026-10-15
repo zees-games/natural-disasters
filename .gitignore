@@ -1,0 +1,18 @@
+# Godot 4
+.godot/
+/android/
+
+# dot-core is a separate repository. For local development, symlink it:
+#   ln -s ../../dot-core/addons/dot_core addons/dot_core
+# Consumers copy both addons into their own project.
+/addons/dot_core
+
+# dot-server is OPTIONAL (console cvars) and linked only so the suite can run the cvar
+# section against the real console; without it that section says so out loud.
+/addons/dot_server
+
+build/
+export_presets.cfg
+.DS_Store
+Thumbs.db
+.vscode/
