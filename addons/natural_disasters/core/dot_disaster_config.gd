@@ -35,6 +35,9 @@ const NO_SEED := 0
 @export_range(0.0, 1000.0, 1.0, "or_greater") var lightning_damage: float = 30.0
 ## Tornado contact damage per second at the core, before intensity scales it.
 @export_range(0.0, 1000.0, 1.0, "or_greater") var tornado_damage: float = 12.0
+## Wind: acceleration in m/s^2 per m/s of wind speed, and the most it may ever push a body.
+@export_range(0.0, 10.0, 0.01, "or_greater") var wind_push: float = 0.35
+@export_range(0.0, 50.0, 0.1, "or_greater") var wind_max_accel: float = 3.0
 
 @export_range(0.0, 10.0, 0.05, "or_greater") var thunderstorm_intensity: float = 1.0
 @export_range(1.0, 3600.0, 1.0, "or_greater") var thunderstorm_duration: float = 90.0

@@ -32,7 +32,7 @@ Subclass `DotDisasterKind` (`id`, `defaults()`, `server_start/tick/end`, `make_v
 
 ## Settings and cvars
 
-Layered like the rest of the family: exported defaults, JSON file, environment (`DISASTERS_`), command line (`--disasters-`), then cvars on a bound console (`manager.bind_console(console)`), each named `disaster_<key>`: `director_enabled`, `interval_min`, `interval_max`, `max_active`, `kinds`, `seed`, `affect_all_bodies`, `lightning_damage`, `tornado_damage`, and per kind `<kind>_intensity`, `_duration`, `_radius`, `_weight`. Commands: `disaster <kind> [intensity] [duration] [radius]`, `disaster_stop [kind]`, `disaster_list`.
+Layered like the rest of the family: exported defaults, JSON file, environment (`DISASTERS_`), command line (`--disasters-`), then cvars on a bound console (`manager.bind_console(console)`), each named `disaster_<key>`: `director_enabled`, `interval_min`, `interval_max`, `max_active`, `kinds`, `seed`, `affect_all_bodies`, `lightning_damage`, `tornado_damage`, `wind_push`, `wind_max_accel` (wind is a bounded push, never a pull toward the wind's speed; body meta `disaster_wind_scale` scales it per body), and per kind `<kind>_intensity`, `_duration`, `_radius`, `_weight`. Commands: `disaster <kind> [intensity] [duration] [radius]`, `disaster_stop [kind]`, `disaster_list`.
 
 ## Examples and tests
 

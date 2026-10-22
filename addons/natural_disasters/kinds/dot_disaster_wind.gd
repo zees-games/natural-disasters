@@ -8,6 +8,9 @@ extends DotDisasterKind
 ## fixed pair of slow sines seeded by the event, so every machine gusts together and
 ## [method wind_at] answers the same on all of them. It falls to nothing beyond `radius`.
 
+## Body meta: multiplies the push, a stand-in for drag area (a van catches more than a ball).
+const SCALE_META := &"disaster_wind_scale"
+
 ## True for the blizzard variant: snow and a white-out rather than dust.
 var snow: bool = false
 
@@ -41,18 +44,32 @@ func wind_at(ev: DotDisasterEvent, at: Vector3) -> Vector3:
 
 
 func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) -> void:
+	var gain := float(ctx.value("wind_push", 0.35))
+	var cap := float(ctx.value("wind_max_accel", 3.0))
 	for b in ctx.bodies():
 		var w := wind_at(ev, b.global_position)
 		if w == Vector3.ZERO:
 			continue
-		# Pulled toward the wind's speed rather than given a constant force, so a body
-		# reaches the wind's speed and stops accelerating: a force would hurl it forever.
-		var gap := w - Vector3(b.linear_velocity.x, 0.0, b.linear_velocity.z)
-		ctx.impulse_body(b, gap * b.mass * 0.7 * delta, b.global_position)
+		var accel := push_accel(w, b.linear_velocity, gain * float(b.get_meta(SCALE_META, 1.0)), cap)
+		ctx.impulse_body(b, accel * b.mass * delta, b.global_position)
 	for p in ctx.players():
 		var w := wind_at(ev, p.global_position)
 		if w != Vector3.ZERO:
 			ctx.push_player(p, w * 0.5 * delta, ev)
+
+
+## Acceleration the wind gives a body moving at [param v]: a push along the wind that is
+## [param gain] per m/s of wind, capped at [param cap] m/s^2, and fading to nothing once the body
+## already moves with the wind. It is never a pull toward the wind's velocity, so a body's own
+## speed against the wind is not braked beyond that bounded push.
+static func push_accel(w: Vector3, v: Vector3, gain: float, cap: float) -> Vector3:
+	var speed := w.length()
+	if speed < 0.001:
+		return Vector3.ZERO
+	var dir := w / speed
+	var along := Vector3(v.x, 0.0, v.z).dot(dir)
+	var room := 1.0 - clampf(along / speed, 0.0, 1.0)
+	return dir * minf(speed * gain, cap) * room
 
 
 func shake_at(_ev: DotDisasterEvent, _at: Vector3) -> float:

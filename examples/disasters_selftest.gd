@@ -10,7 +10,7 @@ extends Node3D
 ## this family has shipped more than once.
 
 const EXPECTED_SECTIONS := 11
-const EXPECTED_CHECKS := 116
+const EXPECTED_CHECKS := 119
 
 var _passed := 0
 var _failed := 0
@@ -398,6 +398,23 @@ func _wind() -> void:
 		"gusts stay between 30 % and 100 % and do vary")
 	_check(m.wind_at(Vector3(0.0, 0.0, 0.0)).length() > 0.5 and m.wind_at(Vector3(0.0, 0.0, 5000.0)) == Vector3.ZERO,
 		"wind_at answers a game's own vehicles, and nothing beyond the radius")
+	var w25 := Vector3(0.0, 0.0, 2.5)
+	var head := DotDisasterWind.push_accel(w25, Vector3(0.0, 0.0, -11.0), 0.35, 3.0)
+	var tail := DotDisasterWind.push_accel(w25, Vector3(0.0, 0.0, 11.0), 0.35, 3.0)
+	_check(head.z > 0.0 and head.z <= 0.9 and tail == Vector3.ZERO,
+		"a gust is a bounded push (%.2f m/s^2 into a headwind) and never pulls a body faster than the wind" % head.z)
+	m.stop()
+	var truck := _ball(root, Vector3(0.0, 8.0, 0.0), 1500.0)
+	truck.gravity_scale = 0.0
+	truck.linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	truck.linear_damp = 0.0
+	truck.linear_velocity = Vector3(0.0, 0.0, -11.0)
+	m.start(&"wind", {"origin": Vector3.ZERO, "duration": 30.0, "intensity": 0.25, "radius": 200.0, "heading": 0.0})
+	await _frames(60)
+	var lost := 11.0 + truck.linear_velocity.z
+	_check(lost >= 0.0 and lost < 1.0, "a body at 11 m/s into a 0.25 headwind loses %.2f m/s in a second, not its speed" % lost)
+	var cap := DotDisasterWind.push_accel(Vector3(0.0, 0.0, 40.0), Vector3.ZERO, 0.35, 3.0)
+	_check(is_equal_approx(cap.z, 3.0), "and the push is capped by wind_max_accel")
 	root.queue_free()
 	_done()
 
