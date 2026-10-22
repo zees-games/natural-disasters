@@ -1,0 +1,21 @@
+# comments
+# Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
+addons/natural_disasters/core/dot_disaster_commands.gd::long_block	1
+addons/natural_disasters/core/dot_disaster_config.gd::long_block	1
+addons/natural_disasters/core/dot_disaster_cvars.gd::long_block	1
+addons/natural_disasters/core/dot_disaster_event.gd::long_block	1
+addons/natural_disasters/core/dot_disaster_kind.gd::long_block	1
+addons/natural_disasters/kinds/dot_disaster_earthquake.gd::long_block	1
+addons/natural_disasters/kinds/dot_disaster_thunderstorm.gd::long_block	1
+addons/natural_disasters/kinds/dot_disaster_tornado.gd::long_block	1
+addons/natural_disasters/kinds/dot_disaster_wind.gd::long_block	1
+addons/natural_disasters/natural_disasters_api.gd::long_block	1
+addons/natural_disasters/natural_disasters_plugin.gd::long_block	1
+addons/natural_disasters/runtime/dot_disaster_director.gd::long_block	1
+addons/natural_disasters/runtime/dot_disaster_manager.gd::banner	6
+addons/natural_disasters/runtime/dot_disaster_manager.gd::long_block	3
+addons/natural_disasters/runtime/dot_disaster_shake.gd::long_block	1
+addons/natural_disasters/runtime/dot_disaster_view.gd::long_block	1
+examples/disasters_demo.gd::long_block	1
+examples/disasters_selftest.gd::banner	2
+examples/disasters_selftest.gd::long_block	1

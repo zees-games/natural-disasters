@@ -1,0 +1,3 @@
+# size
+# Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
+examples/disasters_selftest.gd::_replication	82

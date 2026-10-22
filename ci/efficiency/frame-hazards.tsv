@@ -1,0 +1,4 @@
+# frame-hazards
+# Baselines only shrink: scripts/<gate> --update lowers or drops entries and refuses to add.
+addons/natural_disasters/runtime/dot_disaster_director.gd::choose::alloc_array	2
+addons/natural_disasters/runtime/dot_disaster_manager.gd::step::duplicate	1
