@@ -10,7 +10,7 @@ extends Node3D
 ## this family has shipped more than once.
 
 const EXPECTED_SECTIONS := 11
-const EXPECTED_CHECKS := 119
+const EXPECTED_CHECKS := 122
 
 var _passed := 0
 var _failed := 0
@@ -30,6 +30,23 @@ class FakePlayer extends Node3D:
 
 	func take_damage(amount: float) -> void:
 		hp -= amount
+
+
+## A controller that owns its motion: it only accepts velocity through apply_external_velocity.
+class FakeLifter extends Node3D:
+	var velocity := Vector3.ZERO
+
+	func apply_external_velocity(dv: Vector3) -> void:
+		velocity += dv
+
+	func _physics_process(delta: float) -> void:
+		velocity.y -= 20.0 * delta
+		position += velocity * delta
+		if position.y <= 0.0:
+			position.y = 0.0
+			velocity.y = maxf(velocity.y, 0.0)
+			velocity.x *= 0.9
+			velocity.z *= 0.9
 
 
 ## A stand-in for dot-server's console: the same duck-typed surface and nothing more.
@@ -347,6 +364,11 @@ func _tornado() -> void:
 	var p_near := _player(root, Vector3(10.0, 0.0, 6.0))
 	var p_far := _player(root, Vector3(-250.0, 0.0, 0.0))
 	m.config.affect_all_bodies = true
+	var lifter := FakeLifter.new()
+	lifter.position = Vector3(8.0, 0.0, 4.0)
+	lifter.add_to_group(DotDisasterManager.PLAYER_GROUP)
+	root.add_child(lifter)
+	var lifter_start := lifter.position
 	var res := m.start(&"tornado", {"origin": Vector3.ZERO, "duration": 12.0, "intensity": 1.5, "radius": 60.0, "heading": 0.0, "seed": 3})
 	_check(res.ok, "it starts")
 	var ev: DotDisasterEvent = res.value
@@ -356,8 +378,12 @@ func _tornado() -> void:
 	_check(DotDisasterTornado.centre(ev, 0.0).distance_to(DotDisasterTornado.centre(ev, 12.0)) > 10.0, "and it travels")
 	var peak_up := 0.0
 	var closest := 1e9
+	var lifter_peak := 0.0
+	var lifter_far := 0.0
 	for i in 480:
 		await get_tree().physics_frame
+		lifter_peak = maxf(lifter_peak, lifter.position.y)
+		lifter_far = maxf(lifter_far, _flat(lifter.position - lifter_start).length())
 		peak_up = maxf(peak_up, near.linear_velocity.y)
 		closest = minf(closest, _flat(near.global_position - DotDisasterTornado.centre(ev, ev.elapsed)).length())
 	_check(peak_up > 1.0, "a body inside it is lifted (%.1f m/s)" % peak_up)
@@ -366,6 +392,9 @@ func _tornado() -> void:
 		"a body outside its radius is not touched")
 	_check(p_near.pushes > 50 and p_near.pushed.length() > 1.0, "a player inside it is pushed (%d pushes)" % p_near.pushes)
 	_check(p_far.pushes == 0, "a player outside is not")
+	_check(lifter_peak > 3.0, "a controller taking external velocity is lifted off the ground (%.1f m)" % lifter_peak)
+	_check(lifter_far > 3.0, "and carried along (%.1f m)" % lifter_far)
+	_check(lifter_peak > 0.0 and m.value("tornado_player_strength", 1.0) == 1.0, "at the documented default strength")
 	var flow := DotDisasterTornado.flow_at(ev, Vector3(5.0, 0.0, 0.0))
 	_check(flow.y > 0.0 or ev.envelope() < 0.05, "its flow lifts near the axis")
 	_check(m.wind_at(Vector3(1000.0, 0.0, 0.0)) == Vector3.ZERO, "and is nothing far away")

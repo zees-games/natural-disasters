@@ -34,6 +34,8 @@ const NO_SEED := 0
 ## Lightning damage to a target the bolt hits, before intensity scales it.
 @export_range(0.0, 1000.0, 1.0, "or_greater") var lightning_damage: float = 30.0
 ## Tornado contact damage per second at the core, before intensity scales it.
+@export_range(0.0, 20.0, 0.1, "or_greater") var tornado_player_strength: float = 1.0
+@export_range(0.0, 20.0, 0.1, "or_greater") var tornado_player_lift: float = 1.8
 @export_range(0.0, 1000.0, 1.0, "or_greater") var tornado_damage: float = 12.0
 ## Wind: acceleration in m/s^2 per m/s of wind speed, and the most it may ever push a body.
 @export_range(0.0, 10.0, 0.01, "or_greater") var wind_push: float = 0.35

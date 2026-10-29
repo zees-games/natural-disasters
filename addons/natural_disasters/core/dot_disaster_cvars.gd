@@ -22,6 +22,8 @@ const DESCRIPTIONS := {
 	"seed": "Seeds the director's draws; 0 is unseeded.",
 	"affect_all_bodies": "Disasters move every rigid body in the world, not only group disaster_bodies.",
 	"lightning_damage": "Damage of a lightning strike to what it hits, before intensity.",
+	"tornado_player_strength": "How hard a tornado drags a player along its flow (1 = the flow itself, 0 = players ignored).",
+	"tornado_player_lift": "Extra multiplier on the tornado's upward pull on players, so it beats gravity.",
 	"tornado_damage": "Tornado core damage per second, before intensity.",
 	"wind_push": "Wind acceleration of a body, m/s^2 per m/s of wind speed.",
 	"wind_max_accel": "The most the wind may accelerate a body, m/s^2.",

@@ -590,6 +590,8 @@ func players() -> Array[Node3D]:
 func push_player(player: Node3D, dv: Vector3, ev: DotDisasterEvent) -> void:
 	if player_push_fn.is_valid():
 		player_push_fn.call(player, dv, ev)
+	elif player.has_method("apply_external_velocity"):
+		player.call("apply_external_velocity", dv)
 	elif player.has_method("apply_disaster_push"):
 		player.call("apply_disaster_push", dv)
 	elif player is CharacterBody3D:

@@ -76,9 +76,11 @@ func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) ->
 		var flow := flow_at(ev, p.global_position)
 		if flow == Vector3.ZERO:
 			continue
-		# Players get a fraction: a controller re-asserts its own velocity every frame, and
-		# a full dose would only read as the player rubber-banding.
-		ctx.push_player(p, flow * 0.5 * delta, ev)
+		# A controller that exposes apply_external_velocity keeps the dose; a bare body only
+		# rubber-bands, so the strength cvar is the knob either way.
+		var dv := flow * float(ctx.value("tornado_player_strength", 1.0)) * delta
+		dv.y *= float(ctx.value("tornado_player_lift", 1.8))
+		ctx.push_player(p, dv, ev)
 		if hurt and Vector2(p.global_position.x - c.x, p.global_position.z - c.z).length() < core:
 			ctx.damage(p, dps * DAMAGE_INTERVAL * ev.envelope(), p.global_position, ev)
 
