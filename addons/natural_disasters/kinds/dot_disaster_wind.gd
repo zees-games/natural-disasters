@@ -58,10 +58,9 @@ func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) ->
 			ctx.push_player(p, w * 0.5 * delta, ev)
 
 
-## Acceleration the wind gives a body moving at [param v]: a push along the wind that is
-## [param gain] per m/s of wind, capped at [param cap] m/s^2, and fading to nothing once the body
-## already moves with the wind. It is never a pull toward the wind's velocity, so a body's own
-## speed against the wind is not braked beyond that bounded push.
+## Acceleration the wind gives a body moving at [param v]: [param gain] per m/s of wind, capped
+## at [param cap] m/s^2, fading to nothing once the body moves with the wind. Never a pull toward
+## the wind's velocity, so a body's speed against the wind is not braked beyond that push.
 static func push_accel(w: Vector3, v: Vector3, gain: float, cap: float) -> Vector3:
 	var speed := w.length()
 	if speed < 0.001:
