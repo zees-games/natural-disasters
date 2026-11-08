@@ -1,0 +1,9 @@
+{
+    "schema": 1,
+    "title": "Zee's Natural Disasters",
+    "kinds": ["addon"],
+    "games": "*",
+    "entries": [
+        {"kind": "addon", "id": "natural_disasters", "name": "Natural Disasters", "dir": "addons/natural_disasters", "tags": ["library", "hazards"]}
+    ]
+}
