@@ -46,8 +46,10 @@ The demo is interactive without `--shot` (keys 1 to 5 start a disaster, 0 stops)
 
 ## Credits
 
-- Models in `assets/kenney/nature/`: Kenney Nature Kit, CC0, https://kenney.nl (licence kept in the folder). Used by the example scene only.
-- Sounds in `addons/natural_disasters/audio/`: synthesised by `tools/make_sounds.py` (numpy and ffmpeg, fixed seeds), CC0 by the authors of this repository. Kenney has no thunder, so they are generated.
-- Textures are generated in code.
+| Asset | Author / source | License | Where |
+| --- | --- | --- | --- |
+| Models (example scene only) | Kenney, Nature Kit ([kenney.nl](https://kenney.nl)) | CC0 | `assets/kenney/nature/` |
+| Sounds (Kenney has no thunder, so they are generated) | Synthesised by `tools/make_sounds.py` (numpy and ffmpeg, fixed seeds) | CC0 | `addons/natural_disasters/audio/` |
+| Textures | Generated in code | none | in code |
 
 Code is MIT (see `LICENSE`). The design was informed only by a public description of what such disasters do; no third-party code or assets were used.
