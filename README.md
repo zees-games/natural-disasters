@@ -1,3 +1,5 @@
+![Natural Disasters banner](https://raw.githubusercontent.com/zees-games/natural-disasters/main/docs/banner.png)
+
 Server-authoritative natural disasters for Godot 4: thunderstorm, tornado, blizzard, wind and earthquake, plus a director that schedules them. Part of the [**GameSpice**](https://gamespice.net) family; `dot-core` is the only hard dependency, and `dot-server`'s console is used when present (duck-typed, never imported).
 
 A disaster is a small record (`DotDisasterEvent`) that the authority sends once. Paths, gusts and shaking are deterministic functions of the record's seed and elapsed time, so clients draw the same funnel without a position ever being sent. The only per-event traffic afterwards is lightning strikes. Clients draw and never simulate.
