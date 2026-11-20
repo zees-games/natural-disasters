@@ -16,3 +16,10 @@ export_presets.cfg
 .DS_Store
 Thumbs.db
 .vscode/
+
+# Linked addons (separate repositories, symlinked in for local development).
+/addons/dot_auth
+/addons/dot_cloud
+/addons/dot_moderation
+/addons/dot_sql
+/addons/dot_voice
