@@ -10,7 +10,7 @@ extends Node
 ## its kind's [method GSDisasterKind.server_tick] each physics step, and passes the record to
 ## [member send_fn]. A client's manager has `authority = false`, never simulates, and is fed
 ## by [method receive]; it only draws. Bind [member send_fn] to whatever the game replicates
-## with (a dot-net message, an RPC) and call [method receive] on the other end: the wire form
+## with (a gs-net message, an RPC) and call [method receive] on the other end: the wire form
 ## is plain Dictionaries, so neither end needs to know the other's networking.
 ##
 ## [b]Registering your own.[/b] [method register_kind] takes a [GSDisasterKind]; its cvars
@@ -148,7 +148,7 @@ func kind_ids() -> PackedStringArray:
 	return out
 
 
-## Binds a [code]GSConsole[/code] (duck-typed: dot-server is not a dependency). Registers
+## Binds a [code]GSConsole[/code] (duck-typed: gs-server is not a dependency). Registers
 ## every setting as a `disaster_*` cvar, and the `disaster` commands, and from then on reads
 ## its numbers from the cvars.
 func bind_console(console: Object) -> GSResult:

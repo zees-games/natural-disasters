@@ -1,6 +1,6 @@
 ![Natural Disasters banner](https://raw.githubusercontent.com/zees-games/natural-disasters/main/docs/banner.png)
 
-Server-authoritative natural disasters for Godot 4: thunderstorm, tornado, blizzard, wind and earthquake, plus a director that schedules them. Part of the [**GameSpice**](https://gamespice.net) family; `dot-core` is the only hard dependency, and `dot-server`'s console is used when present (duck-typed, never imported).
+Server-authoritative natural disasters for Godot 4: thunderstorm, tornado, blizzard, wind and earthquake, plus a director that schedules them. Part of the [**GameSpice**](https://gamespice.net) family; `gs-core` is the only hard dependency, and `gs-server`'s console is used when present (duck-typed, never imported).
 
 A disaster is a small record (`GSDisasterEvent`) that the authority sends once. Paths, gusts and shaking are deterministic functions of the record's seed and elapsed time, so clients draw the same funnel without a position ever being sent. The only per-event traffic afterwards is lightning strikes. Clients draw and never simulate.
 
@@ -16,7 +16,7 @@ add_child(disasters)
 disasters.start(&"tornado", {"origin": Vector3(0, 0, 0), "duration": 60.0})   # returns a GSResult
 ```
 
-On a client, feed every message the authority sent to `disasters.receive(msg)` (a `GSResult`; forged or malformed records are refused) and, when a player joins mid-disaster, call `disasters.send_snapshot(func(msg): send_to_that_peer(msg))` on the authority: it hands the callable one `start` per running disaster (`snapshot()` returns the same list). A host can set every hook in one line, `disasters.wire({"damage": ..., "push": ..., "send": ..., "bodies": ..., "players": ..., "origin": ...})` (a typo is `CODE_INVALID`), and `GSDisasterManager.damage_via(&"hurt")` / `push_via(&"add_push")` build the two hooks that just call a method on the target. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. dot-net is not imported: carry the dictionaries over whatever channel the game already has.
+On a client, feed every message the authority sent to `disasters.receive(msg)` (a `GSResult`; forged or malformed records are refused) and, when a player joins mid-disaster, call `disasters.send_snapshot(func(msg): send_to_that_peer(msg))` on the authority: it hands the callable one `start` per running disaster (`snapshot()` returns the same list). A host can set every hook in one line, `disasters.wire({"damage": ..., "push": ..., "send": ..., "bodies": ..., "players": ..., "origin": ...})` (a typo is `CODE_INVALID`), and `GSDisasterManager.damage_via(&"hurt")` / `push_via(&"add_push")` build the two hooks that just call a method on the target. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. gs-net is not imported: carry the dictionaries over whatever channel the game already has.
 
 Nodes (all `GS`-prefixed, no autoloads, hosts found through `GSNodeRef`):
 

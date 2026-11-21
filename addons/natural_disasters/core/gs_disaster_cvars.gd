@@ -4,10 +4,10 @@ extends RefCounted
 ## The cvars every setting is also: `disaster_<key>` for each key in [GSDisasterConfig], and
 ## `disaster_<kind>_<intensity|duration|radius|weight>` for every registered kind.
 ##
-## [b]Duck-typed, and dot-server is not named.[/b] An addon whose scripts mention a
+## [b]Duck-typed, and gs-server is not named.[/b] An addon whose scripts mention a
 ## `class_name` the project lacks fails to parse and takes everything that references it
 ## down, so the console is an [Object] that has `cvar(name, default, description, flags)`,
-## exactly as dot-server's [code]GSConsole[/code] does. The flags are spelled out for the
+## exactly as gs-server's [code]GSConsole[/code] does. The flags are spelled out for the
 ## same reason.
 
 ## Persisted by writeconfig, and meaningful only on a server.

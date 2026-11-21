@@ -49,7 +49,7 @@ class FakeLifter extends Node3D:
 			velocity.z *= 0.9
 
 
-## A stand-in for dot-server's console: the same duck-typed surface and nothing more.
+## A stand-in for gs-server's console: the same duck-typed surface and nothing more.
 class FakeConsole extends RefCounted:
 	var cvars: Dictionary = {}
 	var sources: Array = []
@@ -325,16 +325,16 @@ func _config_and_cvars() -> void:
 
 
 func _real_console() -> void:
-	_section("the real console, when dot-server is linked")
-	if not ClassDB.class_exists(&"Node") or not ResourceLoader.exists("res://addons/dot_server/console/dot_console.gd"):
-		print("  (dot-server is not linked; the commands below are not covered)")
+	_section("the real console, when gs-server is linked")
+	if not ClassDB.class_exists(&"Node") or not ResourceLoader.exists("res://addons/gs_server/console/gs_console.gd"):
+		print("  (gs-server is not linked; the commands below are not covered)")
 		_check(true, "skipped, and said so")
 		_check(true, "skipped, and said so")
 		_check(true, "skipped, and said so")
 		_check(true, "skipped, and said so")
 		_done()
 		return
-	var console_script: GDScript = load("res://addons/dot_server/console/dot_console.gd")
+	var console_script: GDScript = load("res://addons/gs_server/console/gs_console.gd")
 	var console: Node = console_script.new()
 	add_child(console)
 	var w := _world()

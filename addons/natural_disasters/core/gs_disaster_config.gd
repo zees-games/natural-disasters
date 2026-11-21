@@ -4,7 +4,7 @@ extends GSConfig
 ## Every setting the manager and director read, as one layered configuration.
 ##
 ## exported defaults < JSON file < environment (DISASTERS_) < command line, the same layering
-## as every dot-* config. Each key is also a cvar called `disaster_<key>`
+## as every gs-* config. Each key is also a cvar called `disaster_<key>`
 ## ([GSDisasterCvars]); a bound console wins over this object, so an operator's `set` takes
 ## effect on the next disaster without a restart.
 ##
