@@ -1,7 +1,7 @@
-class_name DotDisasterShake
+class_name GSDisasterShake
 extends Node
 
-## Shakes a camera when [method DotDisasterManager.shake_at] says the ground is moving where
+## Shakes a camera when [method GSDisasterManager.shake_at] says the ground is moving where
 ## it is. Moves `h_offset` and `v_offset` only, never the camera's transform: a first-person
 ## controller owns that every frame and would fight a rotation, while the offsets are a
 ## projection shift no controller touches. Put it next to the player's camera.
@@ -9,12 +9,12 @@ extends Node
 const MAX_OFFSET := 0.35
 
 ## The camera to shake, resolved against this node. Defaults to the parent.
-@export var camera_ref: DotNodeRef
-@export var manager_ref: DotNodeRef
+@export var camera_ref: GSNodeRef
+@export var manager_ref: GSNodeRef
 ## Scales the result; a game with an accessibility setting sets this to 0.
 @export_range(0.0, 2.0, 0.05) var strength: float = 1.0
 
-var manager: DotDisasterManager = null
+var manager: GSDisasterManager = null
 var camera: Camera3D = null
 ## The last amount applied, 0..1, for a game that also wants a sound or a rumble from it.
 var current: float = 0.0
@@ -25,13 +25,13 @@ var _t: float = 0.0
 func _ready() -> void:
 	if camera == null:
 		if camera_ref == null:
-			camera_ref = DotNodeRef.new()
-			camera_ref.mode = DotNodeRef.Mode.PARENT
+			camera_ref = GSNodeRef.new()
+			camera_ref.mode = GSNodeRef.Mode.PARENT
 		var res := camera_ref.resolve(self)
 		if res.ok and res.value is Camera3D:
 			camera = res.value
 	if manager == null and manager_ref != null:
-		manager = manager_ref.resolve_or_null(self, "disasters.shake") as DotDisasterManager
+		manager = manager_ref.resolve_or_null(self, "disasters.shake") as GSDisasterManager
 
 
 func _process(delta: float) -> void:

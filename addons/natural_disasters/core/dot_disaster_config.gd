@@ -1,18 +1,18 @@
-class_name DotDisasterConfig
-extends DotConfig
+class_name GSDisasterConfig
+extends GSConfig
 
 ## Every setting the manager and director read, as one layered configuration.
 ##
 ## exported defaults < JSON file < environment (DISASTERS_) < command line, the same layering
 ## as every dot-* config. Each key is also a cvar called `disaster_<key>`
-## ([DotDisasterCvars]); a bound console wins over this object, so an operator's `set` takes
+## ([GSDisasterCvars]); a bound console wins over this object, so an operator's `set` takes
 ## effect on the next disaster without a restart.
 ##
 ## [b]Why the per-kind keys are spelled out rather than held in a dictionary.[/b]
-## [DotConfig] discovers settings by reflecting on exported properties, so a dictionary would
+## [GSConfig] discovers settings by reflecting on exported properties, so a dictionary would
 ## be invisible to the file, environment and command-line layers. A game's own kind has no
 ## property here; it reads its numbers from its own cvars (`disaster_<id>_intensity`,
-## `_duration`, `_radius`, `_weight`) and falls back to [method DotDisasterKind.defaults].
+## `_duration`, `_radius`, `_weight`) and falls back to [method GSDisasterKind.defaults].
 
 const NO_SEED := 0
 
@@ -75,13 +75,13 @@ func cli_prefix() -> String:
 	return "--disasters-"
 
 
-func validate() -> DotResult:
+func validate() -> GSResult:
 	if interval_max < interval_min:
-		return DotResult.fail(
-			DotError.CODE_INVALID, "interval_max is below interval_min.",
+		return GSResult.fail(
+			GSError.CODE_INVALID, "interval_max is below interval_min.",
 			"%s < %s" % [interval_max, interval_min]
 		)
-	return DotResult.success(self)
+	return GSResult.success(self)
 
 
 ## The kinds the director may pick from, or an empty array for "all of them".

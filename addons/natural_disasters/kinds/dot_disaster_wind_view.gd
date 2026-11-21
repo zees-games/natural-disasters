@@ -1,5 +1,5 @@
-class_name DotDisasterWindView
-extends DotDisasterView
+class_name GSDisasterWindView
+extends GSDisasterView
 
 ## Streaming particles on the wind (snow, or dust) and a veil over the screen, louder with
 ## each gust.
@@ -13,8 +13,8 @@ var _bed: AudioStreamPlayer
 
 func build() -> void:
 	var tint := Color(0.95, 0.97, 1.0, 0.9) if snow else Color(0.72, 0.62, 0.45, 0.45)
-	_flakes = DotDisasterFx.particles(
-		DotDisasterFx.soft_texture(), int(clampf(1100.0 * event.intensity, 300.0, 3600.0)),
+	_flakes = GSDisasterFx.particles(
+		GSDisasterFx.soft_texture(), int(clampf(1100.0 * event.intensity, 300.0, 3600.0)),
 		2.2, Vector2(0.18, 0.45) if snow else Vector2(0.25, 0.8), tint
 	)
 	_flakes.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
@@ -31,7 +31,7 @@ func build() -> void:
 func update_view(_delta: float) -> void:
 	var at := viewer_position()
 	var env := event.envelope()
-	var g := DotDisasterWind.gust(event, event.elapsed)
+	var g := GSDisasterWind.gust(event, event.elapsed)
 	var here := presence(at) * env
 	var dir := event.heading_vector()
 	var speed := 10.0 * event.intensity * g

@@ -1,4 +1,4 @@
-class_name DotDisasterKinds
+class_name GSDisasterKinds
 extends RefCounted
 
 ## The kinds the addon ships. A game that wants its own tornado registers one over the stock
@@ -6,11 +6,11 @@ extends RefCounted
 ## manager and registers only what it names.
 
 
-static func stock() -> Array[DotDisasterKind]:
+static func stock() -> Array[GSDisasterKind]:
 	return [
-		DotDisasterThunderstorm.new(),
-		DotDisasterTornado.new(),
-		DotDisasterWind.new(false),
-		DotDisasterWind.new(true),
-		DotDisasterEarthquake.new(),
+		GSDisasterThunderstorm.new(),
+		GSDisasterTornado.new(),
+		GSDisasterWind.new(false),
+		GSDisasterWind.new(true),
+		GSDisasterEarthquake.new(),
 	]

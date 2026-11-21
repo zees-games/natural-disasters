@@ -84,9 +84,9 @@ class FakeConsole extends RefCounted:
 	func get_string(cvar_name: String, fallback: String = "") -> String:
 		return (cvars[cvar_name] as Var).value if cvars.has(cvar_name) else fallback
 
-	func add_source(source: Object, _permission: String = "", _chat: bool = false) -> DotResult:
+	func add_source(source: Object, _permission: String = "", _chat: bool = false) -> GSResult:
 		sources.append(source)
-		return DotResult.success(source.call("names"))
+		return GSResult.success(source.call("names"))
 
 	func set_value(cvar_name: String, value: String) -> void:
 		(cvars[cvar_name] as Var).value = value
@@ -151,10 +151,10 @@ func _world(authority: bool = true, visuals: bool = false) -> Dictionary:
 	floor_body.add_child(floor_shape)
 	floor_body.position = Vector3(0.0, -0.5, 0.0)
 	root.add_child(floor_body)
-	var manager := DotDisasterManager.new()
+	var manager := GSDisasterManager.new()
 	manager.authority = authority
 	manager.sound_enabled = visuals
-	manager.visuals_mode = DotDisasterManager.VisualsMode.ON if visuals else DotDisasterManager.VisualsMode.OFF
+	manager.visuals_mode = GSDisasterManager.VisualsMode.ON if visuals else GSDisasterManager.VisualsMode.OFF
 	root.add_child(manager)
 	return {"root": root, "manager": manager, "floor": floor_body}
 
@@ -175,7 +175,7 @@ func _ball(root: Node3D, at: Vector3, mass: float = 2.0) -> RigidBody3D:
 func _player(root: Node3D, at: Vector3) -> FakePlayer:
 	var p := FakePlayer.new()
 	p.position = at
-	p.add_to_group(DotDisasterManager.PLAYER_GROUP)
+	p.add_to_group(GSDisasterManager.PLAYER_GROUP)
 	root.add_child(p)
 	return p
 
@@ -193,7 +193,7 @@ func _flat(v: Vector3) -> Vector3:
 
 func _event() -> void:
 	_section("the event record")
-	var ev := DotDisasterEvent.new()
+	var ev := GSDisasterEvent.new()
 	ev.id = 7
 	ev.kind = &"tornado"
 	ev.seed = 12345
@@ -203,9 +203,9 @@ func _event() -> void:
 	ev.duration = 60.0
 	ev.elapsed = 12.0
 	ev.heading = 1.0
-	var back := DotDisasterEvent.from_wire(ev.to_wire())
+	var back := GSDisasterEvent.from_wire(ev.to_wire())
 	_check(back.ok, "a record round-trips through the wire")
-	var got: DotDisasterEvent = back.value
+	var got: GSDisasterEvent = back.value
 	_check(got.id == 7 and got.kind == &"tornado" and got.seed == 12345 and got.origin == ev.origin
 		and is_equal_approx(got.radius, 80.0) and is_equal_approx(got.elapsed, 12.0)
 		and is_equal_approx(got.heading, 1.0) and is_equal_approx(got.intensity, 1.5),
@@ -213,22 +213,22 @@ func _event() -> void:
 
 	var missing := ev.to_wire()
 	missing.erase("o")
-	_check(DotDisasterEvent.from_wire(missing).error.code == DotError.CODE_PARSE, "a record missing a field is refused")
+	_check(GSDisasterEvent.from_wire(missing).error.code == GSError.CODE_PARSE, "a record missing a field is refused")
 	var nan := ev.to_wire()
 	nan["n"] = NAN
-	_check(not DotDisasterEvent.from_wire(nan).ok, "a record with a NaN is refused")
+	_check(not GSDisasterEvent.from_wire(nan).ok, "a record with a NaN is refused")
 	var wrong := ev.to_wire()
 	wrong["k"] = 5
-	_check(not DotDisasterEvent.from_wire(wrong).ok, "a record with a number for a kind is refused")
+	_check(not GSDisasterEvent.from_wire(wrong).ok, "a record with a number for a kind is refused")
 	var bad_origin := ev.to_wire()
 	bad_origin["o"] = [1.0, 2.0]
-	_check(not DotDisasterEvent.from_wire(bad_origin).ok, "an origin with two numbers is refused")
+	_check(not GSDisasterEvent.from_wire(bad_origin).ok, "an origin with two numbers is refused")
 	var huge := ev.to_wire()
 	huge["r"] = 1e12
 	huge["n"] = 1e9
 	huge["d"] = -5.0
-	var clamped: DotDisasterEvent = DotDisasterEvent.from_wire(huge).value
-	_check(clamped.radius == DotDisasterEvent.MAX_RADIUS and clamped.intensity == DotDisasterEvent.MAX_INTENSITY
+	var clamped: GSDisasterEvent = GSDisasterEvent.from_wire(huge).value
+	_check(clamped.radius == GSDisasterEvent.MAX_RADIUS and clamped.intensity == GSDisasterEvent.MAX_INTENSITY
 		and clamped.duration == 0.5, "absurd sizes are clamped, not trusted")
 
 	ev.elapsed = 0.0
@@ -249,30 +249,30 @@ func _event() -> void:
 func _registry() -> void:
 	_section("kinds and the registration API")
 	var w := _world()
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var ids := m.kind_ids()
 	_check(ids.size() >= 5 and "thunderstorm" in ids and "tornado" in ids and "earthquake" in ids
 		and "blizzard" in ids and "wind" in ids, "the stock kinds are registered: %s" % ", ".join(ids))
 
-	var custom := DotDisasterKind.new()
+	var custom := GSDisasterKind.new()
 	custom.id = &"acid_rain"
 	custom.display_name = "Acid rain"
 	_check(m.register_kind(custom).ok and m.has_kind(&"acid_rain"), "a game registers its own kind")
 	var dup := m.register_kind(custom)
-	_check(not dup.ok and dup.error.code == DotError.CODE_CONFLICT, "a second kind with the id is a conflict")
+	_check(not dup.ok and dup.error.code == GSError.CODE_CONFLICT, "a second kind with the id is a conflict")
 	_check(m.register_kind(custom, true).ok, "unless it says it replaces")
-	_check(m.register_kind(DotDisasterKind.new()).error.code == DotError.CODE_INVALID, "a kind with no id is refused")
+	_check(m.register_kind(GSDisasterKind.new()).error.code == GSError.CODE_INVALID, "a kind with no id is refused")
 	_check(m.unregister_kind(&"acid_rain") and not m.has_kind(&"acid_rain"), "and one can be removed")
 
 	var unknown := m.start(&"meteor")
-	_check(not unknown.ok and unknown.error.code == DotError.CODE_INVALID, "an unknown kind does not start")
+	_check(not unknown.ok and unknown.error.code == GSError.CODE_INVALID, "an unknown kind does not start")
 	var client_w := _world(false)
-	var client: DotDisasterManager = client_w["manager"]
-	_check(client.start(&"tornado").error.code == DotError.CODE_FORBIDDEN, "a client cannot start a disaster")
-	_check(m.receive({"t": "stop", "i": 1}).error.code == DotError.CODE_FORBIDDEN,
+	var client: GSDisasterManager = client_w["manager"]
+	_check(client.start(&"tornado").error.code == GSError.CODE_FORBIDDEN, "a client cannot start a disaster")
+	_check(m.receive({"t": "stop", "i": 1}).error.code == GSError.CODE_FORBIDDEN,
 		"the authority does not take disaster messages")
 
-	var bare := DotDisasterManager.new()
+	var bare := GSDisasterManager.new()
 	bare.stock_kinds = false
 	add_child(bare)
 	_check(bare.kind_ids().is_empty(), "a game that wants none of the stock kinds gets none")
@@ -284,7 +284,7 @@ func _registry() -> void:
 
 func _config_and_cvars() -> void:
 	_section("layered config and cvars")
-	var cfg := DotDisasterConfig.new()
+	var cfg := GSDisasterConfig.new()
 	_check(cfg.interval_min == 120.0 and cfg.max_active == 1 and cfg.tornado_radius == 60.0, "defaults are the documented ones")
 	var changed := cfg.apply_dictionary({"interval_min": 5.0, "tornado_intensity": 2.5, "nonsense": 1})
 	_check(cfg.interval_min == 5.0 and cfg.tornado_intensity == 2.5, "a dictionary layer overrides the defaults")
@@ -299,7 +299,7 @@ func _config_and_cvars() -> void:
 	_check(Array(cfg.allowed_kinds()) == ["tornado", "wind"], "the allowed kinds are read as a list")
 
 	var w := _world()
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	m.config = cfg
 	var console := FakeConsole.new()
 	var res := m.bind_console(console)
@@ -311,10 +311,10 @@ func _config_and_cvars() -> void:
 	_check(console.sources.size() == 1, "and the disaster commands")
 	console.set_value("disaster_tornado_radius", "33")
 	_check(is_equal_approx(float(m.settings_for(&"tornado")["radius"]), 33.0), "an operator's cvar wins on the next disaster")
-	var ev: DotDisasterEvent = m.start(&"tornado", {"duration": 5.0}).value
+	var ev: GSDisasterEvent = m.start(&"tornado", {"duration": 5.0}).value
 	_check(is_equal_approx(ev.radius, 33.0) and is_equal_approx(ev.intensity, 2.5), "and a started disaster uses it")
 
-	var custom := DotDisasterKind.new()
+	var custom := GSDisasterKind.new()
 	custom.id = &"locusts"
 	m.register_kind(custom)
 	_check(console.cvars.has("disaster_locusts_intensity") and console.cvars.has("disaster_locusts_weight"),
@@ -338,12 +338,12 @@ func _real_console() -> void:
 	var console: Node = console_script.new()
 	add_child(console)
 	var w := _world()
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var bound := m.bind_console(console)
 	_check(bound.ok and console.call("find_cvar", "disaster_tornado_duration") != null, "the cvars exist on the real console")
-	var out: DotResult = console.call("execute", "disaster tornado 2 6 40")
+	var out: GSResult = console.call("execute", "disaster tornado 2 6 40")
 	_check(out.ok and m.is_active(&"tornado"), "`disaster tornado 2 6 40` starts one")
-	var ev: DotDisasterEvent = m.active()[0]
+	var ev: GSDisasterEvent = m.active()[0]
 	_check(is_equal_approx(ev.intensity, 2.0) and is_equal_approx(ev.duration, 6.0) and is_equal_approx(ev.radius, 40.0),
 		"with the numbers it was given")
 	console.call("execute", "disaster_stop")
@@ -358,7 +358,7 @@ func _tornado() -> void:
 	_section("tornado")
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var near := _ball(root, Vector3(14.0, 0.6, 0.0))
 	var far := _ball(root, Vector3(300.0, 0.6, 0.0))
 	var p_near := _player(root, Vector3(10.0, 0.0, 6.0))
@@ -366,16 +366,16 @@ func _tornado() -> void:
 	m.config.affect_all_bodies = true
 	var lifter := FakeLifter.new()
 	lifter.position = Vector3(8.0, 0.0, 4.0)
-	lifter.add_to_group(DotDisasterManager.PLAYER_GROUP)
+	lifter.add_to_group(GSDisasterManager.PLAYER_GROUP)
 	root.add_child(lifter)
 	var lifter_start := lifter.position
 	var res := m.start(&"tornado", {"origin": Vector3.ZERO, "duration": 12.0, "intensity": 1.5, "radius": 60.0, "heading": 0.0, "seed": 3})
 	_check(res.ok, "it starts")
-	var ev: DotDisasterEvent = res.value
-	var path_a := DotDisasterTornado.centre(ev, 3.0)
-	var path_b := DotDisasterTornado.centre(ev, 3.0)
+	var ev: GSDisasterEvent = res.value
+	var path_a := GSDisasterTornado.centre(ev, 3.0)
+	var path_b := GSDisasterTornado.centre(ev, 3.0)
 	_check(path_a == path_b, "its path is a function of the record and the time")
-	_check(DotDisasterTornado.centre(ev, 0.0).distance_to(DotDisasterTornado.centre(ev, 12.0)) > 10.0, "and it travels")
+	_check(GSDisasterTornado.centre(ev, 0.0).distance_to(GSDisasterTornado.centre(ev, 12.0)) > 10.0, "and it travels")
 	var peak_up := 0.0
 	var closest := 1e9
 	var lifter_peak := 0.0
@@ -385,7 +385,7 @@ func _tornado() -> void:
 		lifter_peak = maxf(lifter_peak, lifter.position.y)
 		lifter_far = maxf(lifter_far, _flat(lifter.position - lifter_start).length())
 		peak_up = maxf(peak_up, near.linear_velocity.y)
-		closest = minf(closest, _flat(near.global_position - DotDisasterTornado.centre(ev, ev.elapsed)).length())
+		closest = minf(closest, _flat(near.global_position - GSDisasterTornado.centre(ev, ev.elapsed)).length())
 	_check(peak_up > 1.0, "a body inside it is lifted (%.1f m/s)" % peak_up)
 	_check(near.global_position.y > 0.7 or peak_up > 1.0, "and has left the ground")
 	_check(absf(far.linear_velocity.length()) < 0.5 and far.global_position.distance_to(Vector3(300.0, 0.5, 0.0)) < 1.0,
@@ -395,7 +395,7 @@ func _tornado() -> void:
 	_check(lifter_peak > 3.0, "a controller taking external velocity is lifted off the ground (%.1f m)" % lifter_peak)
 	_check(lifter_far > 3.0, "and carried along (%.1f m)" % lifter_far)
 	_check(lifter_peak > 0.0 and m.value("tornado_player_strength", 1.0) == 1.0, "at the documented default strength")
-	var flow := DotDisasterTornado.flow_at(ev, Vector3(5.0, 0.0, 0.0))
+	var flow := GSDisasterTornado.flow_at(ev, Vector3(5.0, 0.0, 0.0))
 	_check(flow.y > 0.0 or ev.envelope() < 0.05, "its flow lifts near the axis")
 	_check(m.wind_at(Vector3(1000.0, 0.0, 0.0)) == Vector3.ZERO, "and is nothing far away")
 	await _frames(1)
@@ -408,12 +408,12 @@ func _wind() -> void:
 	_section("wind and blizzard")
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var ball := _ball(root, Vector3(0.0, 0.6, 0.0), 1.0)
 	var far := _ball(root, Vector3(500.0, 0.6, 0.0), 1.0)
 	var p := _player(root, Vector3(3.0, 0.0, 3.0))
-	var ev: DotDisasterEvent = m.start(&"wind", {"origin": Vector3.ZERO, "duration": 12.0, "intensity": 2.0, "radius": 200.0, "heading": 0.0}).value
-	var blizzard: DotDisasterEvent = m.start(&"blizzard", {"origin": Vector3(1000.0, 0.0, 0.0), "duration": 12.0, "radius": 50.0}).value
+	var ev: GSDisasterEvent = m.start(&"wind", {"origin": Vector3.ZERO, "duration": 12.0, "intensity": 2.0, "radius": 200.0, "heading": 0.0}).value
+	var blizzard: GSDisasterEvent = m.start(&"blizzard", {"origin": Vector3(1000.0, 0.0, 0.0), "duration": 12.0, "radius": 50.0}).value
 	_check(blizzard.kind == &"blizzard" and m.active_count() == 2, "blizzard and wind are both kinds")
 	await _frames(240)
 	_check(ball.linear_velocity.z > 1.0 or ball.global_position.z > 1.0,
@@ -422,14 +422,14 @@ func _wind() -> void:
 	_check(p.pushed.z > 0.1, "a player is pushed downwind")
 	var gusts := []
 	for t in 20:
-		gusts.append(DotDisasterWind.gust(ev, float(t)))
+		gusts.append(GSDisasterWind.gust(ev, float(t)))
 	_check(float(gusts.min()) >= 0.29 and float(gusts.max()) <= 1.0 and float(gusts.max()) - float(gusts.min()) > 0.1,
 		"gusts stay between 30 % and 100 % and do vary")
 	_check(m.wind_at(Vector3(0.0, 0.0, 0.0)).length() > 0.5 and m.wind_at(Vector3(0.0, 0.0, 5000.0)) == Vector3.ZERO,
 		"wind_at answers a game's own vehicles, and nothing beyond the radius")
 	var w25 := Vector3(0.0, 0.0, 2.5)
-	var head := DotDisasterWind.push_accel(w25, Vector3(0.0, 0.0, -11.0), 0.35, 3.0)
-	var tail := DotDisasterWind.push_accel(w25, Vector3(0.0, 0.0, 11.0), 0.35, 3.0)
+	var head := GSDisasterWind.push_accel(w25, Vector3(0.0, 0.0, -11.0), 0.35, 3.0)
+	var tail := GSDisasterWind.push_accel(w25, Vector3(0.0, 0.0, 11.0), 0.35, 3.0)
 	_check(head.z > 0.0 and head.z <= 0.9 and tail == Vector3.ZERO,
 		"a gust is a bounded push (%.2f m/s^2 into a headwind) and never pulls a body faster than the wind" % head.z)
 	m.stop()
@@ -442,7 +442,7 @@ func _wind() -> void:
 	await _frames(60)
 	var lost := 11.0 + truck.linear_velocity.z
 	_check(lost >= 0.0 and lost < 1.0, "a body at 11 m/s into a 0.25 headwind loses %.2f m/s in a second, not its speed" % lost)
-	var cap := DotDisasterWind.push_accel(Vector3(0.0, 0.0, 40.0), Vector3.ZERO, 0.35, 3.0)
+	var cap := GSDisasterWind.push_accel(Vector3(0.0, 0.0, 40.0), Vector3.ZERO, 0.35, 3.0)
 	_check(is_equal_approx(cap.z, 3.0), "and the push is capped by wind_max_accel")
 	root.queue_free()
 	_done()
@@ -452,11 +452,11 @@ func _earthquake() -> void:
 	_section("earthquake")
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var near := _ball(root, Vector3(8.0, 0.6, 0.0), 1.0)
 	var far := _ball(root, Vector3(400.0, 0.6, 0.0), 1.0)
 	var p := _player(root, Vector3(-6.0, 0.0, 4.0))
-	var ev: DotDisasterEvent = m.start(&"earthquake", {"origin": Vector3.ZERO, "duration": 9.0, "intensity": 2.0, "radius": 90.0}).value
+	var ev: GSDisasterEvent = m.start(&"earthquake", {"origin": Vector3.ZERO, "duration": 9.0, "intensity": 2.0, "radius": 90.0}).value
 	var rest := near.global_position
 	var peak := 0.0
 	var peak_shake := 0.0
@@ -480,15 +480,15 @@ func _thunderstorm() -> void:
 	_section("thunderstorm")
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var ball := _ball(root, Vector3(20.0, 0.6, 0.0), 1.0)
 	var p := _player(root, Vector3(20.5, 0.0, 1.0))
-	var ev: DotDisasterEvent = m.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 40.0, "intensity": 1.0, "radius": 120.0}).value
-	var kind: DotDisasterThunderstorm = m.get_kind(&"thunderstorm")
+	var ev: GSDisasterEvent = m.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 40.0, "intensity": 1.0, "radius": 120.0}).value
+	var kind: GSDisasterThunderstorm = m.get_kind(&"thunderstorm")
 	var strikes: Array = []
 	m.lightning_struck.connect(func(at: Vector3, target: Object) -> void: strikes.append([at, target]))
 	var hits: Array = []
-	m.damage_fn = func(target: Object, amount: float, _at: Vector3, _e: DotDisasterEvent) -> void: hits.append([target, amount])
+	m.damage_fn = func(target: Object, amount: float, _at: Vector3, _e: GSDisasterEvent) -> void: hits.append([target, amount])
 	var at := kind.strike(ev, m, Vector3(20.0, 0.0, 2.5))
 	await _frames(2)
 	_check(absf(at.y) < 0.01, "a bolt lands on the ground it was aimed at (y = %.2f)" % at.y)
@@ -506,11 +506,11 @@ func _thunderstorm() -> void:
 
 	var before := strikes.size()
 	await _frames(1)
-	var ticker := m.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 60.0, "intensity": 3.0, "radius": 100.0, "seed": 5}).value as DotDisasterEvent
+	var ticker := m.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 60.0, "intensity": 3.0, "radius": 100.0, "seed": 5}).value as GSDisasterEvent
 	ticker.elapsed = 20.0
 	await _frames(300)
 	_check(strikes.size() > before, "a running storm strikes by itself (%d bolts)" % (strikes.size() - before))
-	_check(m.receive({"t": "strike"}).error.code == DotError.CODE_FORBIDDEN, "a strike message is refused by the authority")
+	_check(m.receive({"t": "strike"}).error.code == GSError.CODE_FORBIDDEN, "a strike message is refused by the authority")
 	root.queue_free()
 	_done()
 
@@ -520,32 +520,32 @@ func _replication() -> void:
 	var server_w := _world(true)
 	var client_w := _world(false)
 	var late_w := _world(false)
-	var server: DotDisasterManager = server_w["manager"]
-	var client: DotDisasterManager = client_w["manager"]
-	var late: DotDisasterManager = late_w["manager"]
+	var server: GSDisasterManager = server_w["manager"]
+	var client: GSDisasterManager = client_w["manager"]
+	var late: GSDisasterManager = late_w["manager"]
 	var wire: Array[Dictionary] = []
 	server.send_fn = func(msg: Dictionary) -> void:
 		wire.append(msg)
 		client.receive(msg)
 	var started: Array = []
-	client.disaster_started.connect(func(e: DotDisasterEvent) -> void: started.append(e))
-	var ev: DotDisasterEvent = server.start(&"tornado", {"origin": Vector3(5.0, 0.0, 5.0), "duration": 30.0, "seed": 99}).value
+	client.disaster_started.connect(func(e: GSDisasterEvent) -> void: started.append(e))
+	var ev: GSDisasterEvent = server.start(&"tornado", {"origin": Vector3(5.0, 0.0, 5.0), "duration": 30.0, "seed": 99}).value
 	_check(wire.size() == 1 and wire[0]["t"] == "start", "starting sends one record")
 	_check(client.active_count() == 1 and started.size() == 1, "the client starts it")
-	var mirror: DotDisasterEvent = client.active()[0]
+	var mirror: GSDisasterEvent = client.active()[0]
 	_check(mirror.id == ev.id and mirror.seed == 99 and mirror.origin == ev.origin and mirror.kind == &"tornado",
 		"identical to the server's")
-	_check(DotDisasterTornado.centre(mirror, 5.0) == DotDisasterTornado.centre(ev, 5.0),
+	_check(GSDisasterTornado.centre(mirror, 5.0) == GSDisasterTornado.centre(ev, 5.0),
 		"so the funnel is in the same place on both without a position being sent")
 	client.step(2.0)
 	_check(is_equal_approx(mirror.elapsed, 2.0) and is_equal_approx(ev.elapsed, 0.0), "the client keeps its own time")
 
-	var storm: DotDisasterEvent = server.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 30.0}).value
+	var storm: GSDisasterEvent = server.start(&"thunderstorm", {"origin": Vector3.ZERO, "duration": 30.0}).value
 	var strikes: Array = []
 	client.lightning_struck.connect(func(at: Vector3, _t: Object) -> void: strikes.append(at))
 	var server_strikes: Array = []
 	server.lightning_struck.connect(func(at: Vector3, _t: Object) -> void: server_strikes.append(at))
-	(server.get_kind(&"thunderstorm") as DotDisasterThunderstorm).strike(storm, server, Vector3(3.0, 0.0, 3.0))
+	(server.get_kind(&"thunderstorm") as GSDisasterThunderstorm).strike(storm, server, Vector3(3.0, 0.0, 3.0))
 	_check(strikes.size() == 1 and server_strikes.size() == 1 and (strikes[0] as Vector3).distance_to(server_strikes[0]) < 0.01,
 		"a strike reaches the client at the same place")
 
@@ -560,14 +560,14 @@ func _replication() -> void:
 	_check(n == 2 and joined.size() == 2, "send_snapshot hands each running disaster to the joiner")
 	_check(late.send_snapshot(func(_m: Dictionary) -> void: joined.append(null)) == 0 and joined.size() == 2,
 		"and a client with no authority sends none")
-	var wired := DotDisasterManager.new()
+	var wired := GSDisasterManager.new()
 	var got: Array = []
-	var wr := wired.wire({"damage": DotDisasterManager.damage_via(&"take_damage"),
-		"push": DotDisasterManager.push_via(&"apply_disaster_push"), "send": func(_m: Dictionary) -> void: got.append(1)})
+	var wr := wired.wire({"damage": GSDisasterManager.damage_via(&"take_damage"),
+		"push": GSDisasterManager.push_via(&"apply_disaster_push"), "send": func(_m: Dictionary) -> void: got.append(1)})
 	_check(wr.ok and wired.damage_fn.is_valid() and wired.player_push_fn.is_valid() and wired.send_fn.is_valid(),
 		"wire assigns the hooks by name")
 	var bad := wired.wire({"dammage": Callable()})
-	_check(not bad.ok and bad.error.code == DotError.CODE_INVALID, "wire refuses an unknown hook name")
+	_check(not bad.ok and bad.error.code == GSError.CODE_INVALID, "wire refuses an unknown hook name")
 	var probe := _player(server_w["root"], Vector3(500.0, 0.0, 500.0))
 	wired.damage_fn.call(probe, 7.0, Vector3.ZERO, ev)
 	wired.player_push_fn.call(probe, Vector3(1, 0, 0), ev)
@@ -576,7 +576,7 @@ func _replication() -> void:
 	probe.queue_free()
 
 	var through_json: Variant = JSON.parse_string(JSON.stringify(ev.to_wire()))
-	var text_late := _world(false)["manager"] as DotDisasterManager
+	var text_late := _world(false)["manager"] as GSDisasterManager
 	var text_res := text_late.receive(through_json)
 	_check(text_res.ok and text_late.find_event(ev.id) != null, "a record that went through JSON (ints as floats) is accepted")
 
@@ -587,7 +587,7 @@ func _replication() -> void:
 	forged["i"] = 99
 	forged["k"] = "meteor"
 	var unknown := client.receive(forged)
-	_check(unknown.error.code == DotError.CODE_UNSUPPORTED, "a kind this build lacks is unsupported, not a crash")
+	_check(unknown.error.code == GSError.CODE_UNSUPPORTED, "a kind this build lacks is unsupported, not a crash")
 	_check(not client.receive({"t": 5}).ok and not client.receive({"t": "stop", "i": 424242}).ok, "garbage is refused")
 
 	server.stop(&"tornado")
@@ -603,11 +603,11 @@ func _director() -> void:
 	_section("the director")
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	m.config.interval_min = 10.0
 	m.config.interval_max = 20.0
 	m.config.seed = 77
-	var director := DotDisasterDirector.new()
+	var director := GSDisasterDirector.new()
 	director.manager = m
 	root.add_child(director)
 	director.set_physics_process(false)
@@ -667,7 +667,7 @@ func _director() -> void:
 	var c := _sequence(78)
 	_check(a == b and a.size() >= 4, "the same seed replays the same schedule")
 	_check(a != c, "and another seed does not")
-	_check(director.describe().begins_with("DotDisasterDirector"), "it describes itself")
+	_check(director.describe().begins_with("GSDisasterDirector"), "it describes itself")
 	root.queue_free()
 	_done()
 
@@ -675,19 +675,19 @@ func _director() -> void:
 var _max_seen := 0
 
 
-func _check_max_active(m: DotDisasterManager) -> void:
+func _check_max_active(m: GSDisasterManager) -> void:
 	_max_seen = maxi(_max_seen, m.active_count())
 
 
 func _sequence(seed_value: int) -> Array:
 	var w := _world()
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	m.config.interval_min = 5.0
 	m.config.interval_max = 8.0
 	m.config.seed = seed_value
 	m.set_physics_process(false)
-	var d := DotDisasterDirector.new()
+	var d := GSDisasterDirector.new()
 	d.manager = m
 	root.add_child(d)
 	d.set_physics_process(false)
@@ -704,23 +704,23 @@ func _views_and_shake() -> void:
 	_section("views, sound and the camera shake")
 	var w := _world(true, true)
 	var root: Node3D = w["root"]
-	var m: DotDisasterManager = w["manager"]
+	var m: GSDisasterManager = w["manager"]
 	var camera := Camera3D.new()
 	camera.position = Vector3(0.0, 2.0, 12.0)
 	root.add_child(camera)
 	camera.make_current()
-	var shake := DotDisasterShake.new()
+	var shake := GSDisasterShake.new()
 	camera.add_child(shake)
 	shake.manager = m
 
 	for id in ["thunderstorm", "tornado", "blizzard", "wind", "earthquake"]:
-		var ev: DotDisasterEvent = m.start(StringName(id), {"origin": Vector3.ZERO, "duration": 20.0, "intensity": 1.0, "radius": 80.0}).value
+		var ev: GSDisasterEvent = m.start(StringName(id), {"origin": Vector3.ZERO, "duration": 20.0, "intensity": 1.0, "radius": 80.0}).value
 		ev.elapsed = 8.0
 		var view := m.view_of(ev)
 		await _frames(3)
 		_check(view != null and view.get_child_count() >= 1 and view.is_inside_tree(), "%s draws a view with parts" % id)
-	var storm_view: DotDisasterStormView = m.view_of(m.active()[0]) as DotDisasterStormView
-	_check(storm_view != null, "the storm view is a DotDisasterStormView")
+	var storm_view: GSDisasterStormView = m.view_of(m.active()[0]) as GSDisasterStormView
+	_check(storm_view != null, "the storm view is a GSDisasterStormView")
 	storm_view.show_strike(Vector3(2.0, 0.0, 2.0), 12)
 	_check(storm_view.bolt_count() == 1, "a strike puts a bolt on screen")
 	await _frames(25)
@@ -729,7 +729,7 @@ func _views_and_shake() -> void:
 	var names := ["thunder_1", "thunder_2", "thunder_3", "rain_loop", "wind_loop", "tornado_loop", "quake_rumble"]
 	var missing := PackedStringArray()
 	for n in names:
-		if DotDisasterFx.sound(n) == null:
+		if GSDisasterFx.sound(n) == null:
 			missing.append(n)
 	_check(missing.is_empty(), "every sound the views use is shipped (%s)" % ", ".join(missing))
 	var quake := m.active()[4]
@@ -747,7 +747,7 @@ func _views_and_shake() -> void:
 	_check(camera.h_offset == 0.0 and camera.v_offset == 0.0 or shake.current == 0.0, "it settles when the ground does")
 	var leftover := 0
 	for child in root.get_children():
-		if child is DotDisasterView:
+		if child is GSDisasterView:
 			leftover += 1
 	_check(leftover == 0, "every view is freed with its disaster")
 	_check(quake != null and m.describe().contains("authority") and m.describe_lines().size() >= 1, "the manager describes itself")

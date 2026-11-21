@@ -1,5 +1,5 @@
-class_name DotDisasterEarthquake
-extends DotDisasterKind
+class_name GSDisasterEarthquake
+extends GSDisasterKind
 
 ## The ground moves: loose bodies are kicked about, players stumble, cameras shake, and the
 ## dust comes up. Strongest at the epicentre, nothing past `radius`.
@@ -21,13 +21,13 @@ func defaults() -> Dictionary:
 	return {"intensity": 1.0, "duration": 18.0, "radius": 90.0, "weight": 1.5}
 
 
-func server_start(ev: DotDisasterEvent, ctx: DotDisasterManager) -> void:
+func server_start(ev: GSDisasterEvent, ctx: GSDisasterManager) -> void:
 	var st := ctx.state(ev)
 	st["clock"] = 0.0
 	st["rng"] = ev.rng(5)
 
 
-func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) -> void:
+func server_tick(ev: GSDisasterEvent, delta: float, ctx: GSDisasterManager) -> void:
 	var st := ctx.state(ev)
 	st["clock"] = float(st["clock"]) + delta
 	if float(st["clock"]) < PULSE_INTERVAL:
@@ -49,16 +49,16 @@ func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) ->
 
 
 ## 0..1 by distance from the epicentre, squared so the edge is gentle.
-func _falloff(ev: DotDisasterEvent, at: Vector3) -> float:
+func _falloff(ev: GSDisasterEvent, at: Vector3) -> float:
 	var f := clampf(1.0 - ev.flat_distance(at) / ev.radius, 0.0, 1.0)
 	return f * f
 
 
-func shake_at(ev: DotDisasterEvent, at: Vector3) -> float:
+func shake_at(ev: GSDisasterEvent, at: Vector3) -> float:
 	var f := clampf(1.0 - ev.flat_distance(at) / (ev.radius * 1.3), 0.0, 1.0)
 	var jolt := 0.85 + 0.15 * sin(ev.elapsed * 9.0)
 	return clampf((0.25 + 0.4 * ev.intensity) * f * ev.envelope() * jolt, 0.0, 1.0)
 
 
-func make_view(_ev: DotDisasterEvent, _ctx: DotDisasterManager) -> DotDisasterView:
-	return DotDisasterQuakeView.new()
+func make_view(_ev: GSDisasterEvent, _ctx: GSDisasterManager) -> GSDisasterView:
+	return GSDisasterQuakeView.new()

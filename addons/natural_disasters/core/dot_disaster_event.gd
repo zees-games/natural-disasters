@@ -1,4 +1,4 @@
-class_name DotDisasterEvent
+class_name GSDisasterEvent
 extends RefCounted
 
 ## One disaster that is running: the whole of what crosses the wire.
@@ -84,30 +84,30 @@ func to_wire() -> Dictionary:
 ## Reads a record off the wire. Everything on it is attacker-controlled on a client that was
 ## sent a forged message and sloppy on a host that was not, so every field is checked and
 ## clamped rather than trusted; a malformed record is refused, never half-applied.
-static func from_wire(msg: Dictionary) -> DotResult:
+static func from_wire(msg: Dictionary) -> GSResult:
 	for key in ["i", "k", "s", "o", "r", "n", "d"]:
 		if not msg.has(key):
-			return DotResult.fail(
-				DotError.CODE_PARSE, "A disaster record is missing a field.", key
+			return GSResult.fail(
+				GSError.CODE_PARSE, "A disaster record is missing a field.", key
 			)
 
 	var o: Variant = msg["o"]
 	if not (o is Array) or (o as Array).size() != 3:
-		return DotResult.fail(DotError.CODE_PARSE, "A disaster origin must be three numbers.")
+		return GSResult.fail(GSError.CODE_PARSE, "A disaster origin must be three numbers.")
 
 	var nums: Array[float] = []
 	for v in [msg["r"], msg["n"], msg["d"], msg.get("e", 0.0), msg.get("h", 0.0),
 			(o as Array)[0], (o as Array)[1], (o as Array)[2]]:
 		if not (v is float or v is int) or not is_finite(float(v)):
-			return DotResult.fail(DotError.CODE_PARSE, "A disaster field is not a finite number.")
+			return GSResult.fail(GSError.CODE_PARSE, "A disaster field is not a finite number.")
 		nums.append(float(v))
 
 	# A JSON carrier (a host that sends text) turns every integer into a float, so a whole
 	# float is an id; a fraction still is not.
 	if not _whole(msg["i"]) or not _whole(msg["s"]) or not (msg["k"] is String):
-		return DotResult.fail(DotError.CODE_PARSE, "A disaster id, seed or kind has the wrong type.")
+		return GSResult.fail(GSError.CODE_PARSE, "A disaster id, seed or kind has the wrong type.")
 
-	var ev := DotDisasterEvent.new()
+	var ev := GSDisasterEvent.new()
 	ev.id = int(msg["i"])
 	ev.seed = int(msg["s"])
 	ev.kind = StringName(String(msg["k"]).to_lower())
@@ -117,7 +117,7 @@ static func from_wire(msg: Dictionary) -> DotResult:
 	ev.elapsed = clampf(nums[3], 0.0, ev.duration)
 	ev.heading = nums[4]
 	ev.origin = Vector3(nums[5], nums[6], nums[7])
-	return DotResult.success(ev)
+	return GSResult.success(ev)
 
 
 static func _whole(v: Variant) -> bool:

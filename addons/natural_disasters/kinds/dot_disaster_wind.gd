@@ -1,5 +1,5 @@
-class_name DotDisasterWind
-extends DotDisasterKind
+class_name GSDisasterWind
+extends GSDisasterKind
 
 ## A steady gusting wind that shoves everything one way: `wind` (dust and leaves in the air)
 ## and `blizzard` (the same wind with driven snow and a white-out) are one class.
@@ -28,14 +28,14 @@ func defaults() -> Dictionary:
 
 
 ## Gust factor 0.3..1 at time [param t].
-static func gust(ev: DotDisasterEvent, t: float) -> float:
+static func gust(ev: GSDisasterEvent, t: float) -> float:
 	var r := ev.rng(3)
 	var a := r.randf() * TAU
 	var b := r.randf() * TAU
 	return 0.65 + 0.35 * sin(t * 0.8 + a) * sin(t * 0.27 + b)
 
 
-func wind_at(ev: DotDisasterEvent, at: Vector3) -> Vector3:
+func wind_at(ev: GSDisasterEvent, at: Vector3) -> Vector3:
 	var d := ev.flat_distance(at)
 	if d >= ev.radius:
 		return Vector3.ZERO
@@ -43,7 +43,7 @@ func wind_at(ev: DotDisasterEvent, at: Vector3) -> Vector3:
 	return ev.heading_vector() * 10.0 * ev.intensity * gust(ev, ev.elapsed) * ev.envelope() * edge
 
 
-func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) -> void:
+func server_tick(ev: GSDisasterEvent, delta: float, ctx: GSDisasterManager) -> void:
 	var gain := float(ctx.value("wind_push", 0.35))
 	var cap := float(ctx.value("wind_max_accel", 3.0))
 	for b in ctx.bodies():
@@ -71,11 +71,11 @@ static func push_accel(w: Vector3, v: Vector3, gain: float, cap: float) -> Vecto
 	return dir * minf(speed * gain, cap) * room
 
 
-func shake_at(_ev: DotDisasterEvent, _at: Vector3) -> float:
+func shake_at(_ev: GSDisasterEvent, _at: Vector3) -> float:
 	return 0.0
 
 
-func make_view(_ev: DotDisasterEvent, _ctx: DotDisasterManager) -> DotDisasterView:
-	var v := DotDisasterWindView.new()
+func make_view(_ev: GSDisasterEvent, _ctx: GSDisasterManager) -> GSDisasterView:
+	var v := GSDisasterWindView.new()
 	v.snow = snow
 	return v

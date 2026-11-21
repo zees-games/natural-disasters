@@ -1,5 +1,5 @@
-class_name DotDisasterThunderstorm
-extends DotDisasterKind
+class_name GSDisasterThunderstorm
+extends GSDisasterKind
 
 ## Rain, and lightning that comes down somewhere and hurts what is there.
 ##
@@ -28,13 +28,13 @@ func defaults() -> Dictionary:
 	return {"intensity": 1.0, "duration": 90.0, "radius": 120.0, "weight": 3.0}
 
 
-func server_start(ev: DotDisasterEvent, ctx: DotDisasterManager) -> void:
+func server_start(ev: GSDisasterEvent, ctx: GSDisasterManager) -> void:
 	var st := ctx.state(ev)
 	st["charge"] = 0.35
 	st["rng"] = ev.rng(11)
 
 
-func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) -> void:
+func server_tick(ev: GSDisasterEvent, delta: float, ctx: GSDisasterManager) -> void:
 	var st := ctx.state(ev)
 	st["charge"] = float(st["charge"]) + STRIKE_RATE * ev.intensity * ev.envelope() * delta
 	while float(st["charge"]) >= 1.0:
@@ -45,7 +45,7 @@ func server_tick(ev: DotDisasterEvent, delta: float, ctx: DotDisasterManager) ->
 ## Brings one bolt down now and returns where. Public so a game can call lightning on cue:
 ## [param aim] is a Vector3 to strike at (the bolt finds the ground under it), or null to
 ## draw a point as the storm would.
-func strike(ev: DotDisasterEvent, ctx: DotDisasterManager, aim_at: Variant = null) -> Vector3:
+func strike(ev: GSDisasterEvent, ctx: GSDisasterManager, aim_at: Variant = null) -> Vector3:
 	var st := ctx.state(ev)
 	var rng: RandomNumberGenerator = st.get("rng", ev.rng(11))
 	var aim: Vector3 = aim_at if aim_at is Vector3 else _aim_point(ev, ctx, rng)
@@ -74,7 +74,7 @@ func strike(ev: DotDisasterEvent, ctx: DotDisasterManager, aim_at: Variant = nul
 	return at
 
 
-func _aim_point(ev: DotDisasterEvent, ctx: DotDisasterManager, rng: RandomNumberGenerator) -> Vector3:
+func _aim_point(ev: GSDisasterEvent, ctx: GSDisasterManager, rng: RandomNumberGenerator) -> Vector3:
 	if rng.randf() < AIMED_SHARE:
 		var targets: Array[Node3D] = []
 		for p in ctx.players():
@@ -91,7 +91,7 @@ func _aim_point(ev: DotDisasterEvent, ctx: DotDisasterManager, rng: RandomNumber
 	return ev.origin + Vector3(cos(angle) * r, 0.0, sin(angle) * r)
 
 
-func on_message(ev: DotDisasterEvent, msg: Dictionary, ctx: DotDisasterManager) -> void:
+func on_message(ev: GSDisasterEvent, msg: Dictionary, ctx: GSDisasterManager) -> void:
 	if String(msg.get("t", "")) != "strike":
 		return
 	var p: Variant = msg.get("p", null)
@@ -103,10 +103,10 @@ func on_message(ev: DotDisasterEvent, msg: Dictionary, ctx: DotDisasterManager) 
 	var at := Vector3(float(p[0]), float(p[1]), float(p[2]))
 	ctx.add_shake_pulse(at, 0.5 * clampf(ev.intensity, 0.3, 1.5))
 	var view := ctx.view_of(ev)
-	if view is DotDisasterStormView:
-		(view as DotDisasterStormView).show_strike(at, int(msg.get("n", 0)))
+	if view is GSDisasterStormView:
+		(view as GSDisasterStormView).show_strike(at, int(msg.get("n", 0)))
 	ctx.lightning_struck.emit(at, ctx.state(ev).get("target", null))
 
 
-func make_view(_ev: DotDisasterEvent, _ctx: DotDisasterManager) -> DotDisasterView:
-	return DotDisasterStormView.new()
+func make_view(_ev: GSDisasterEvent, _ctx: GSDisasterManager) -> GSDisasterView:
+	return GSDisasterStormView.new()

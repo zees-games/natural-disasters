@@ -1,5 +1,5 @@
-class_name DotDisasterTornadoView
-extends DotDisasterView
+class_name GSDisasterTornadoView
+extends GSDisasterView
 
 ## The funnel: stacked translucent rings that widen with height and turn at different rates,
 ## debris spiralling in it, and dust at the foot. Its roar is louder the closer the viewer.
@@ -54,7 +54,7 @@ func build() -> void:
 		_funnel.add_child(m)
 		_ring_nodes.append(m)
 
-	_debris = DotDisasterFx.particles(DotDisasterFx.soft_texture(), 160, 2.4, Vector2(0.4, 1.4), Color(0.25, 0.2, 0.16, 0.85))
+	_debris = GSDisasterFx.particles(GSDisasterFx.soft_texture(), 160, 2.4, Vector2(0.4, 1.4), Color(0.25, 0.2, 0.16, 0.85))
 	_debris.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	_debris.emission_sphere_radius = _profile(0.5)
 	_debris.gravity = Vector3.ZERO
@@ -68,7 +68,7 @@ func build() -> void:
 	_funnel.add_child(_debris)
 	_debris.position.y = _height * 0.35
 
-	_dust = DotDisasterFx.particles(DotDisasterFx.soft_texture(), 90, 3.0, Vector2(4.0, 9.0), Color(0.5, 0.44, 0.36, 0.45))
+	_dust = GSDisasterFx.particles(GSDisasterFx.soft_texture(), 90, 3.0, Vector2(4.0, 9.0), Color(0.5, 0.44, 0.36, 0.45))
 	_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
 	_dust.emission_sphere_radius = core_scale()
 	_dust.gravity = Vector3(0.0, 1.0, 0.0)
@@ -82,16 +82,16 @@ func build() -> void:
 
 
 func core_scale() -> float:
-	return DotDisasterTornado.core_radius(event) * 1.4
+	return GSDisasterTornado.core_radius(event) * 1.4
 
 
 ## Radius of the funnel at a fraction of its height: thin at the ground, flaring above.
 func _profile(t: float) -> float:
-	return 1.4 + (DotDisasterTornado.core_radius(event) * 2.6 - 1.4) * pow(t, 1.7)
+	return 1.4 + (GSDisasterTornado.core_radius(event) * 2.6 - 1.4) * pow(t, 1.7)
 
 
 func update_view(delta: float) -> void:
-	var c := DotDisasterTornado.centre(event, event.elapsed)
+	var c := GSDisasterTornado.centre(event, event.elapsed)
 	var env := event.envelope()
 	_funnel.global_position = Vector3(c.x, event.origin.y, c.z)
 	_funnel.scale = Vector3(1.0, 1.0, 1.0) * (0.15 + 0.85 * env)

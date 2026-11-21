@@ -1,15 +1,15 @@
-class_name DotDisasterQuakeView
-extends DotDisasterView
+class_name GSDisasterQuakeView
+extends GSDisasterView
 
 ## Dust lifting off the ground around the viewer and a low rumble. The camera shake is not
-## here: it comes from [method DotDisasterManager.shake_at] through a [DotDisasterShake].
+## here: it comes from [method GSDisasterManager.shake_at] through a [GSDisasterShake].
 
 var _dust: CPUParticles3D
 var _rumble: AudioStreamPlayer
 
 
 func build() -> void:
-	_dust = DotDisasterFx.particles(DotDisasterFx.soft_texture(), 120, 3.5, Vector2(2.5, 6.0), Color(0.55, 0.48, 0.4, 0.4))
+	_dust = GSDisasterFx.particles(GSDisasterFx.soft_texture(), 120, 3.5, Vector2(2.5, 6.0), Color(0.55, 0.48, 0.4, 0.4))
 	_dust.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
 	_dust.emission_box_extents = Vector3(22.0, 0.3, 22.0)
 	_dust.direction = Vector3.UP

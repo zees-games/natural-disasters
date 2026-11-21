@@ -1,4 +1,4 @@
-class_name DotDisasterFx
+class_name GSDisasterFx
 extends RefCounted
 
 ## Small drawing helpers shared by the stock views: textures made in code, so the addon ships
@@ -9,7 +9,7 @@ static var _streak: Texture2D = null
 
 
 static func audio_dir() -> String:
-	var script: Script = DotDisasterFx
+	var script: Script = GSDisasterFx
 	return script.resource_path.get_base_dir().get_base_dir().path_join("audio")
 
 

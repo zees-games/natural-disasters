@@ -1,22 +1,22 @@
-class_name DotDisasterView
+class_name GSDisasterView
 extends Node3D
 
 ## The drawing of one running disaster on one machine. Base class: a kind's
-## [method DotDisasterKind.make_view] returns a subclass that builds its particles, meshes and
+## [method GSDisasterKind.make_view] returns a subclass that builds its particles, meshes and
 ## sounds in [method build] and moves them in [method refresh].
 ##
 ## A view reads the event and the manager and writes to nothing but itself. It owns its own
 ## audio and its own screen overlays, so freeing it (the manager does that when the event
 ## ends) silences and clears everything the disaster added.
 
-var event: DotDisasterEvent
-var ctx: DotDisasterManager
+var event: GSDisasterEvent
+var ctx: GSDisasterManager
 var _overlay_layer: CanvasLayer = null
 var _sounds: Array[AudioStreamPlayer] = []
 var _age: float = 0.0
 
 
-func setup(ev: DotDisasterEvent, manager: DotDisasterManager) -> void:
+func setup(ev: GSDisasterEvent, manager: GSDisasterManager) -> void:
 	event = ev
 	ctx = manager
 	name = "Disaster%d_%s" % [ev.id, ev.kind]
@@ -75,7 +75,7 @@ func add_overlay(color: Color) -> ColorRect:
 func add_sound(sound_name: String, loop: bool, volume_db: float = -6.0, autoplay: bool = true) -> AudioStreamPlayer:
 	if ctx != null and not ctx.sound_enabled:
 		return null
-	var stream: AudioStream = DotDisasterFx.sound(sound_name)
+	var stream: AudioStream = GSDisasterFx.sound(sound_name)
 	if stream == null:
 		return null
 	var player := AudioStreamPlayer.new()

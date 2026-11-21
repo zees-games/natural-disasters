@@ -2,33 +2,33 @@
 
 Server-authoritative natural disasters for Godot 4: thunderstorm, tornado, blizzard, wind and earthquake, plus a director that schedules them. Part of the [**GameSpice**](https://gamespice.net) family; `dot-core` is the only hard dependency, and `dot-server`'s console is used when present (duck-typed, never imported).
 
-A disaster is a small record (`DotDisasterEvent`) that the authority sends once. Paths, gusts and shaking are deterministic functions of the record's seed and elapsed time, so clients draw the same funnel without a position ever being sent. The only per-event traffic afterwards is lightning strikes. Clients draw and never simulate.
+A disaster is a small record (`GSDisasterEvent`) that the authority sends once. Paths, gusts and shaking are deterministic functions of the record's seed and elapsed time, so clients draw the same funnel without a position ever being sent. The only per-event traffic afterwards is lightning strikes. Clients draw and never simulate.
 
 ## Using it
 
 ```gdscript
-var disasters := DotDisasterManager.new()
+var disasters := GSDisasterManager.new()
 disasters.authority = multiplayer.is_server()
 disasters.send_fn = func(msg: Dictionary) -> void: my_broadcast(msg)   # authority only
 disasters.damage_fn = func(target, amount, at, ev) -> void: target.hurt(amount)
 add_child(disasters)
 
-disasters.start(&"tornado", {"origin": Vector3(0, 0, 0), "duration": 60.0})   # returns a DotResult
+disasters.start(&"tornado", {"origin": Vector3(0, 0, 0), "duration": 60.0})   # returns a GSResult
 ```
 
-On a client, feed every message the authority sent to `disasters.receive(msg)` (a `DotResult`; forged or malformed records are refused) and, when a player joins mid-disaster, call `disasters.send_snapshot(func(msg): send_to_that_peer(msg))` on the authority: it hands the callable one `start` per running disaster (`snapshot()` returns the same list). A host can set every hook in one line, `disasters.wire({"damage": ..., "push": ..., "send": ..., "bodies": ..., "players": ..., "origin": ...})` (a typo is `CODE_INVALID`), and `DotDisasterManager.damage_via(&"hurt")` / `push_via(&"add_push")` build the two hooks that just call a method on the target. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. dot-net is not imported: carry the dictionaries over whatever channel the game already has.
+On a client, feed every message the authority sent to `disasters.receive(msg)` (a `GSResult`; forged or malformed records are refused) and, when a player joins mid-disaster, call `disasters.send_snapshot(func(msg): send_to_that_peer(msg))` on the authority: it hands the callable one `start` per running disaster (`snapshot()` returns the same list). A host can set every hook in one line, `disasters.wire({"damage": ..., "push": ..., "send": ..., "bodies": ..., "players": ..., "origin": ...})` (a typo is `CODE_INVALID`), and `GSDisasterManager.damage_via(&"hurt")` / `push_via(&"add_push")` build the two hooks that just call a method on the target. `start` on a client and `receive` on the authority are both `CODE_FORBIDDEN`. dot-net is not imported: carry the dictionaries over whatever channel the game already has.
 
-Nodes (all `Dot`-prefixed, no autoloads, hosts found through `DotNodeRef`):
+Nodes (all `GS`-prefixed, no autoloads, hosts found through `GSNodeRef`):
 
-- `DotDisasterManager`: owns the disasters, the registry of kinds and the views. Hooks: `send_fn`, `damage_fn`, `player_push_fn`, `bodies_fn`, `players_fn`, `origin_fn`. Targets are found by group (`disaster_bodies`, `disaster_players`) or by the hooks; set meta `disaster_immune` to exempt a body. Duck methods on a target: `apply_disaster_push(dv)`, `apply_disaster_damage(amount, at)`, `take_damage(amount)`.
-- `DotDisasterDirector`: schedules disasters on a seeded random interval, weighted by kind, honouring `max_active` and `kinds`.
-- `DotDisasterShake`: camera shake through `h_offset`/`v_offset` only, never the transform.
+- `GSDisasterManager`: owns the disasters, the registry of kinds and the views. Hooks: `send_fn`, `damage_fn`, `player_push_fn`, `bodies_fn`, `players_fn`, `origin_fn`. Targets are found by group (`disaster_bodies`, `disaster_players`) or by the hooks; set meta `disaster_immune` to exempt a body. Duck methods on a target: `apply_disaster_push(dv)`, `apply_disaster_damage(amount, at)`, `take_damage(amount)`.
+- `GSDisasterDirector`: schedules disasters on a seeded random interval, weighted by kind, honouring `max_active` and `kinds`.
+- `GSDisasterShake`: camera shake through `h_offset`/`v_offset` only, never the transform.
 
 Queries for a game's own physics: `wind_at(point)` (a vehicle can be pushed by it), `shake_at(point)`, `is_active(kind)`, `active()`. Lightning on cue: `get_kind(&"thunderstorm").strike(event, manager, at_point)`.
 
 ## Registering your own disaster
 
-Subclass `DotDisasterKind` (`id`, `defaults()`, `server_start/tick/end`, `make_view`, `shake_at`, `wind_at`) and call `manager.register_kind(kind)`; it returns `CODE_CONFLICT` for a taken id unless `replace` is true. A kind registered after a console is bound gets its cvars too. `stock_kinds = false` leaves the five stock kinds out. A game with its own weather (rain on a delivery route, say) registers a kind rather than forking.
+Subclass `GSDisasterKind` (`id`, `defaults()`, `server_start/tick/end`, `make_view`, `shake_at`, `wind_at`) and call `manager.register_kind(kind)`; it returns `CODE_CONFLICT` for a taken id unless `replace` is true. A kind registered after a console is bound gets its cvars too. `stock_kinds = false` leaves the five stock kinds out. A game with its own weather (rain on a delivery route, say) registers a kind rather than forking.
 
 ## Settings and cvars
 

@@ -1,5 +1,5 @@
-class_name DotDisasterStormView
-extends DotDisasterView
+class_name GSDisasterStormView
+extends GSDisasterView
 
 ## Rain around the viewer, a darkened screen, a flash and a bolt per strike, thunder late by
 ## the distance.
@@ -17,8 +17,8 @@ var _bed: AudioStreamPlayer
 
 
 func build() -> void:
-	_rain = DotDisasterFx.particles(
-		DotDisasterFx.streak_texture(), int(clampf(900.0 * event.intensity, 300.0, 3200.0)), 0.9,
+	_rain = GSDisasterFx.particles(
+		GSDisasterFx.streak_texture(), int(clampf(900.0 * event.intensity, 300.0, 3200.0)), 0.9,
 		Vector2(1.0, 1.0), Color(0.8, 0.86, 1.0, 0.8), BaseMaterial3D.BILLBOARD_FIXED_Y
 	)
 	(_rain.mesh as QuadMesh).size = Vector2(0.07, 1.8)
@@ -103,14 +103,14 @@ func show_strike(at: Vector3, bolt_seed: int) -> void:
 	_bolts.append([root, 0.3])
 	var d := viewer_position().distance_to(at)
 	_flash_level = maxf(_flash_level, clampf(1.0 - d / 260.0, 0.0, 1.0) * 0.8)
-	var sound_name: String = DotDisasterStormView._thunder_name(bolt_seed)
+	var sound_name: String = GSDisasterStormView._thunder_name(bolt_seed)
 	var player := add_sound(sound_name, false, db(clampf(1.0 - d / 400.0, 0.1, 1.0), -2.0), false)
 	if player != null:
-		_thunder.append([minf(d / DotDisasterThunderstorm.SOUND_SPEED, DotDisasterThunderstorm.MAX_THUNDER_DELAY), player])
+		_thunder.append([minf(d / GSDisasterThunderstorm.SOUND_SPEED, GSDisasterThunderstorm.MAX_THUNDER_DELAY), player])
 
 
 static func _thunder_name(bolt_seed: int) -> String:
-	return DotDisasterThunderstorm.SOUNDS[absi(bolt_seed) % DotDisasterThunderstorm.SOUNDS.size()]
+	return GSDisasterThunderstorm.SOUNDS[absi(bolt_seed) % GSDisasterThunderstorm.SOUNDS.size()]
 
 
 ## How many bolts are on screen, for a suite.

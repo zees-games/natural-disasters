@@ -1,13 +1,13 @@
-class_name DotDisasterCvars
+class_name GSDisasterCvars
 extends RefCounted
 
-## The cvars every setting is also: `disaster_<key>` for each key in [DotDisasterConfig], and
+## The cvars every setting is also: `disaster_<key>` for each key in [GSDisasterConfig], and
 ## `disaster_<kind>_<intensity|duration|radius|weight>` for every registered kind.
 ##
 ## [b]Duck-typed, and dot-server is not named.[/b] An addon whose scripts mention a
 ## `class_name` the project lacks fails to parse and takes everything that references it
 ## down, so the console is an [Object] that has `cvar(name, default, description, flags)`,
-## exactly as dot-server's [code]DotConsole[/code] does. The flags are spelled out for the
+## exactly as dot-server's [code]GSConsole[/code] does. The flags are spelled out for the
 ## same reason.
 
 ## Persisted by writeconfig, and meaningful only on a server.
@@ -38,9 +38,9 @@ const KIND_KEYS := {
 
 
 ## Registers one cvar per key of [param config]. Returns the count.
-static func register(console: Object, config: DotDisasterConfig) -> DotResult:
+static func register(console: Object, config: GSDisasterConfig) -> GSResult:
 	if console == null or not console.has_method("cvar"):
-		return DotResult.fail(DotError.CODE_INVALID, "A console must have cvar().")
+		return GSResult.fail(GSError.CODE_INVALID, "A console must have cvar().")
 	var count := 0
 	for key in config.config_keys():
 		var key_name := String(key)
@@ -49,12 +49,12 @@ static func register(console: Object, config: DotDisasterConfig) -> DotResult:
 		if _add(console, "disaster_" + key_name, config.get(key_name),
 				String(DESCRIPTIONS.get(key_name, "natural-disasters setting"))):
 			count += 1
-	return DotResult.success(count)
+	return GSResult.success(count)
 
 
 ## Registers a kind's cvars from its defaults, with the config's value where it has one so a
 ## JSON file or environment override survives the console being bound after it.
-static func register_kind(console: Object, kind: DotDisasterKind, config: DotDisasterConfig) -> int:
+static func register_kind(console: Object, kind: GSDisasterKind, config: GSDisasterConfig) -> int:
 	var count := 0
 	var defaults := kind.defaults()
 	for key in defaults:

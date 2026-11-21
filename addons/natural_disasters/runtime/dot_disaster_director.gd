@@ -1,4 +1,4 @@
-class_name DotDisasterDirector
+class_name GSDisasterDirector
 extends Node
 
 ## Decides when the next disaster happens and which one. A timer and a weighted draw, nothing
@@ -12,14 +12,14 @@ extends Node
 const CHANNEL := "disasters.director"
 
 ## Where the manager is, resolved against this node's parent. Defaults to the first
-## [DotDisasterManager] under it. A game that builds both in code can assign [member manager]
+## [GSDisasterManager] under it. A game that builds both in code can assign [member manager]
 ## directly instead.
-@export var manager_ref: DotNodeRef
+@export var manager_ref: GSNodeRef
 
 ## Fired when a disaster is chosen, before it starts.
 signal chosen(kind_id: StringName, wait: float)
 
-var manager: DotDisasterManager = null
+var manager: GSDisasterManager = null
 var last_choice: StringName = &""
 
 var _countdown: float = -1.0
@@ -30,14 +30,14 @@ var _seeded: bool = false
 func _ready() -> void:
 	if manager == null:
 		if manager_ref == null:
-			manager_ref = DotNodeRef.new()
-			manager_ref.mode = DotNodeRef.Mode.DESCENDANT_OF_TYPE
-			manager_ref.type_name = &"DotDisasterManager"
+			manager_ref = GSNodeRef.new()
+			manager_ref.mode = GSNodeRef.Mode.DESCENDANT_OF_TYPE
+			manager_ref.type_name = &"GSDisasterManager"
 		var res := manager_ref.resolve(get_parent() if get_parent() != null else self)
 		if res.ok:
 			manager = res.value
 		else:
-			DotLog.warn(CHANNEL, "no disaster manager found", {"why": res.error.message})
+			GSLog.warn(CHANNEL, "no disaster manager found", {"why": res.error.message})
 	_rng.randomize()
 
 
@@ -78,7 +78,7 @@ func step(delta: float) -> void:
 	chosen.emit(id, wait)
 	var res := manager.start(id, {"origin": manager.pick_origin(_rng), "seed": _rng.randi()})
 	if not res.ok:
-		DotLog.warn(CHANNEL, "could not start the chosen disaster", {"kind": id, "why": res.error.message})
+		GSLog.warn(CHANNEL, "could not start the chosen disaster", {"kind": id, "why": res.error.message})
 	last_choice = id
 	_countdown = wait
 
@@ -129,4 +129,4 @@ func _seed_once() -> void:
 
 
 func describe() -> String:
-	return "DotDisasterDirector next in %.0f s, last %s" % [_countdown, last_choice]
+	return "GSDisasterDirector next in %.0f s, last %s" % [_countdown, last_choice]

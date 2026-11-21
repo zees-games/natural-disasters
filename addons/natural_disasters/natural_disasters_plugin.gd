@@ -8,9 +8,9 @@ extends EditorPlugin
 ## have.
 
 const _TYPES := [
-	["DotDisasterManager", "Node", "res://addons/natural_disasters/runtime/dot_disaster_manager.gd"],
-	["DotDisasterDirector", "Node", "res://addons/natural_disasters/runtime/dot_disaster_director.gd"],
-	["DotDisasterShake", "Node", "res://addons/natural_disasters/runtime/dot_disaster_shake.gd"],
+	["GSDisasterManager", "Node", "res://addons/natural_disasters/runtime/dot_disaster_manager.gd"],
+	["GSDisasterDirector", "Node", "res://addons/natural_disasters/runtime/dot_disaster_director.gd"],
+	["GSDisasterShake", "Node", "res://addons/natural_disasters/runtime/dot_disaster_shake.gd"],
 ]
 
 

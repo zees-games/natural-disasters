@@ -12,7 +12,7 @@ extends Node3D
 const KINDS := ["thunderstorm", "tornado", "blizzard", "wind", "earthquake"]
 const MODELS := ["tree_pineTallA", "tree_pineRoundA", "tree_cone", "tree_cone_dark", "rock_largeA", "rock_tallB", "stone_largeB"]
 
-var manager: DotDisasterManager
+var manager: GSDisasterManager
 var camera: Camera3D
 var _shot := ""
 var _t := 0.0
@@ -27,10 +27,10 @@ func _ready() -> void:
 		elif args[i] == "--shot" and i + 1 < args.size():
 			_shot = args[i + 1]
 	_build_world()
-	manager = DotDisasterManager.new()
-	manager.visuals_mode = DotDisasterManager.VisualsMode.ON
+	manager = GSDisasterManager.new()
+	manager.visuals_mode = GSDisasterManager.VisualsMode.ON
 	add_child(manager)
-	var shake := DotDisasterShake.new()
+	var shake := GSDisasterShake.new()
 	camera.add_child(shake)
 	shake.manager = manager
 	_start(kind)

@@ -1,4 +1,4 @@
-class_name DotDisasterManager
+class_name GSDisasterManager
 extends Node
 
 ## Runs the disasters of one world: starts them, steps them, draws them, and answers a
@@ -6,20 +6,20 @@ extends Node
 ## server and on every client.
 ##
 ## [b]Server-authoritative, replicated as a record.[/b] On the authority (`authority = true`,
-## the dedicated server or the listen host) [method start] creates a [DotDisasterEvent], runs
-## its kind's [method DotDisasterKind.server_tick] each physics step, and passes the record to
+## the dedicated server or the listen host) [method start] creates a [GSDisasterEvent], runs
+## its kind's [method GSDisasterKind.server_tick] each physics step, and passes the record to
 ## [member send_fn]. A client's manager has `authority = false`, never simulates, and is fed
 ## by [method receive]; it only draws. Bind [member send_fn] to whatever the game replicates
 ## with (a dot-net message, an RPC) and call [method receive] on the other end: the wire form
 ## is plain Dictionaries, so neither end needs to know the other's networking.
 ##
-## [b]Registering your own.[/b] [method register_kind] takes a [DotDisasterKind]; its cvars
+## [b]Registering your own.[/b] [method register_kind] takes a [GSDisasterKind]; its cvars
 ## are registered when a console is bound ([method bind_console]), so it is configured the
 ## same way as the stock four. [method wind_at] and [method shake_at] let a game's own
 ## vehicles and camera answer to any kind, stock or not.
 ##
 ## [codeblock]
-## var disasters := DotDisasterManager.new()
+## var disasters := GSDisasterManager.new()
 ## disasters.authority = multiplayer.is_server()
 ## disasters.send_fn = func(msg: Dictionary) -> void: net.broadcast(&"disaster", msg)
 ## add_child(disasters)
@@ -34,8 +34,8 @@ const BODY_GROUP := &"disaster_bodies"
 const PLAYER_GROUP := &"disaster_players"
 const IMMUNE_META := &"disaster_immune"
 
-signal disaster_started(event: DotDisasterEvent)
-signal disaster_ended(event: DotDisasterEvent)
+signal disaster_started(event: GSDisasterEvent)
+signal disaster_ended(event: GSDisasterEvent)
 ## A bolt came down at [param position]; [param target] is what it hit (null for the ground
 ## or a miss). Fires on the authority and on every client.
 signal lightning_struck(position: Vector3, target: Object)
@@ -49,7 +49,7 @@ enum VisualsMode {
 
 ## The node the weather is drawn under and physics queries run against. Defaults to the
 ## parent, which is the world in the usual arrangement.
-@export var world: DotNodeRef
+@export var world: GSNodeRef
 ## True on the machine that decides: the dedicated server or the listen host.
 @export var authority: bool = true
 @export var visuals_mode: VisualsMode = VisualsMode.AUTO
@@ -57,16 +57,16 @@ enum VisualsMode {
 @export var audio_bus: StringName = &"Master"
 ## Register the four stock kinds (and the wind and blizzard variants) on `_ready`.
 @export var stock_kinds: bool = true
-@export var config: DotDisasterConfig
+@export var config: GSDisasterConfig
 ## Physics layers a lightning bolt can hit.
 @export_flags_3d_physics var strike_mask: int = 0xFFFFFFFF
 
 ## Called with each outgoing message on the authority: `(msg: Dictionary) -> void`.
 var send_fn: Callable = Callable()
-## `(target: Object, amount: float, at: Vector3, event: DotDisasterEvent) -> void`. Without
+## `(target: Object, amount: float, at: Vector3, event: GSDisasterEvent) -> void`. Without
 ## one, a target with `apply_disaster_damage(amount, at)` or `take_damage(amount)` is called.
 var damage_fn: Callable = Callable()
-## `(player: Node3D, velocity_change: Vector3, event: DotDisasterEvent) -> void`. Without one
+## `(player: Node3D, velocity_change: Vector3, event: GSDisasterEvent) -> void`. Without one
 ## a player with `apply_disaster_push(dv)` is called, else a CharacterBody3D has its velocity
 ## changed. A game with a prediction-corrected controller sets this.
 var player_push_fn: Callable = Callable()
@@ -81,7 +81,7 @@ var origin_fn: Callable = Callable()
 
 var _console: Object = null
 var _kinds: Dictionary = {}
-var _events: Array[DotDisasterEvent] = []
+var _events: Array[GSDisasterEvent] = []
 var _views: Dictionary = {}
 var _state: Dictionary = {}
 var _next_id: int = 1
@@ -93,10 +93,10 @@ var _pulses: Array = []
 
 func _ready() -> void:
 	if config == null:
-		config = DotDisasterConfig.new()
+		config = GSDisasterConfig.new()
 	if world == null:
-		world = DotNodeRef.new()
-		world.mode = DotNodeRef.Mode.PARENT
+		world = GSNodeRef.new()
+		world.mode = GSNodeRef.Mode.PARENT
 	if stock_kinds:
 		register_stock_kinds()
 	_rng.randomize()
@@ -107,19 +107,19 @@ func _ready() -> void:
 
 ## Adds a kind. A second kind with the same id is a conflict, not a replacement, unless
 ## [param replace] says so: a game swapping the stock tornado for its own says it.
-func register_kind(kind: DotDisasterKind, replace: bool = false) -> DotResult:
+func register_kind(kind: GSDisasterKind, replace: bool = false) -> GSResult:
 	if kind == null or kind.id == &"":
-		return DotResult.fail(DotError.CODE_INVALID, "A disaster kind needs an id.")
+		return GSResult.fail(GSError.CODE_INVALID, "A disaster kind needs an id.")
 	if _kinds.has(kind.id) and not replace:
-		return DotResult.fail(
-			DotError.CODE_CONFLICT, "A disaster kind with this id is already registered.",
+		return GSResult.fail(
+			GSError.CODE_CONFLICT, "A disaster kind with this id is already registered.",
 			String(kind.id)
 		)
 	_kinds[kind.id] = kind
 	if _console != null:
-		DotDisasterCvars.register_kind(_console, kind, config)
-	DotLog.debug(CHANNEL, "kind registered", {"kind": kind.id})
-	return DotResult.success(kind)
+		GSDisasterCvars.register_kind(_console, kind, config)
+	GSLog.debug(CHANNEL, "kind registered", {"kind": kind.id})
+	return GSResult.success(kind)
 
 
 func unregister_kind(id: StringName) -> bool:
@@ -127,7 +127,7 @@ func unregister_kind(id: StringName) -> bool:
 
 
 func register_stock_kinds() -> void:
-	for kind in DotDisasterKinds.stock():
+	for kind in GSDisasterKinds.stock():
 		if not _kinds.has(kind.id):
 			register_kind(kind)
 
@@ -136,7 +136,7 @@ func has_kind(id: StringName) -> bool:
 	return _kinds.has(id)
 
 
-func get_kind(id: StringName) -> DotDisasterKind:
+func get_kind(id: StringName) -> GSDisasterKind:
 	return _kinds.get(id)
 
 
@@ -148,25 +148,25 @@ func kind_ids() -> PackedStringArray:
 	return out
 
 
-## Binds a [code]DotConsole[/code] (duck-typed: dot-server is not a dependency). Registers
+## Binds a [code]GSConsole[/code] (duck-typed: dot-server is not a dependency). Registers
 ## every setting as a `disaster_*` cvar, and the `disaster` commands, and from then on reads
 ## its numbers from the cvars.
-func bind_console(console: Object) -> DotResult:
+func bind_console(console: Object) -> GSResult:
 	if console == null or not console.has_method("cvar"):
-		return DotResult.fail(
-			DotError.CODE_INVALID, "A console must have cvar().",
+		return GSResult.fail(
+			GSError.CODE_INVALID, "A console must have cvar().",
 			"" if console == null else console.get_class()
 		)
 	if config == null:
-		config = DotDisasterConfig.new()
+		config = GSDisasterConfig.new()
 	_console = console
-	var res := DotDisasterCvars.register(console, config)
+	var res := GSDisasterCvars.register(console, config)
 	if not res.ok:
 		return res.wrap("binding the console")
 	for id in _kinds:
-		DotDisasterCvars.register_kind(console, _kinds[id], config)
+		GSDisasterCvars.register_kind(console, _kinds[id], config)
 	if console.has_method("add_source"):
-		console.call("add_source", DotDisasterCommands.new(self), "cvar")
+		console.call("add_source", GSDisasterCommands.new(self), "cvar")
 	return res
 
 
@@ -193,7 +193,7 @@ func value(key: String, fallback: Variant) -> Variant:
 
 ## The numbers a kind runs with: its cvars, then its config keys, then its defaults.
 func settings_for(id: StringName) -> Dictionary:
-	var kind: DotDisasterKind = _kinds.get(id)
+	var kind: GSDisasterKind = _kinds.get(id)
 	var out: Dictionary = {}
 	if kind == null:
 		return out
@@ -208,41 +208,41 @@ func settings_for(id: StringName) -> Dictionary:
 ## Starts a disaster. [param overrides] may hold `intensity`, `duration`, `radius`, `origin`
 ## (Vector3), `heading` (radians) and `seed`; anything left out comes from
 ## [method settings_for] and the manager's own draws. Authority only.
-func start(id: StringName, overrides: Dictionary = {}) -> DotResult:
+func start(id: StringName, overrides: Dictionary = {}) -> GSResult:
 	if not authority:
-		return DotResult.fail(
-			DotError.CODE_FORBIDDEN, "Only the authority starts a disaster.", String(id)
+		return GSResult.fail(
+			GSError.CODE_FORBIDDEN, "Only the authority starts a disaster.", String(id)
 		)
-	var kind: DotDisasterKind = _kinds.get(id)
+	var kind: GSDisasterKind = _kinds.get(id)
 	if kind == null:
-		return DotResult.fail(
-			DotError.CODE_INVALID, "No disaster kind is registered with this id.", String(id)
+		return GSResult.fail(
+			GSError.CODE_INVALID, "No disaster kind is registered with this id.", String(id)
 		)
 	var s := settings_for(id)
-	var ev := DotDisasterEvent.new()
+	var ev := GSDisasterEvent.new()
 	ev.id = _next_id
 	_next_id += 1
 	ev.kind = id
 	ev.seed = int(overrides.get("seed", _rng.randi()))
-	ev.intensity = clampf(float(overrides.get("intensity", s.get("intensity", 1.0))), 0.0, DotDisasterEvent.MAX_INTENSITY)
-	ev.duration = clampf(float(overrides.get("duration", s.get("duration", 60.0))), 0.5, DotDisasterEvent.MAX_DURATION)
-	ev.radius = clampf(float(overrides.get("radius", s.get("radius", 80.0))), 1.0, DotDisasterEvent.MAX_RADIUS)
+	ev.intensity = clampf(float(overrides.get("intensity", s.get("intensity", 1.0))), 0.0, GSDisasterEvent.MAX_INTENSITY)
+	ev.duration = clampf(float(overrides.get("duration", s.get("duration", 60.0))), 0.5, GSDisasterEvent.MAX_DURATION)
+	ev.radius = clampf(float(overrides.get("radius", s.get("radius", 80.0))), 1.0, GSDisasterEvent.MAX_RADIUS)
 	ev.heading = float(overrides.get("heading", _rng.randf() * TAU))
 	var origin_value: Variant = overrides.get("origin", null)
 	ev.origin = origin_value if origin_value is Vector3 else pick_origin()
 	_begin(ev, kind)
-	DotLog.info(CHANNEL, "disaster started", {
+	GSLog.info(CHANNEL, "disaster started", {
 		"kind": id, "id": ev.id, "intensity": snappedf(ev.intensity, 0.01),
 		"duration": snappedf(ev.duration, 0.1), "radius": snappedf(ev.radius, 0.1),
 	})
 	if send_fn.is_valid():
 		send_fn.call(ev.to_wire())
-	return DotResult.success(ev)
+	return GSResult.success(ev)
 
 
 ## Stops one disaster early (its id), or every one of a kind (a kind id), or all of them.
 func stop(which: Variant = null) -> int:
-	var victims: Array[DotDisasterEvent] = []
+	var victims: Array[GSDisasterEvent] = []
 	for ev in _events:
 		if which == null or (which is int and ev.id == which) \
 				or ((which is StringName or which is String) and ev.kind == StringName(which)):
@@ -254,7 +254,7 @@ func stop(which: Variant = null) -> int:
 	return victims.size()
 
 
-func _begin(ev: DotDisasterEvent, kind: DotDisasterKind) -> void:
+func _begin(ev: GSDisasterEvent, kind: GSDisasterKind) -> void:
 	_events.append(ev)
 	_state[ev.id] = {}
 	if authority:
@@ -263,23 +263,23 @@ func _begin(ev: DotDisasterEvent, kind: DotDisasterKind) -> void:
 	disaster_started.emit(ev)
 
 
-func _end(ev: DotDisasterEvent) -> void:
+func _end(ev: GSDisasterEvent) -> void:
 	if not _events.has(ev):
 		return
 	_events.erase(ev)
-	var kind: DotDisasterKind = _kinds.get(ev.kind)
+	var kind: GSDisasterKind = _kinds.get(ev.kind)
 	if authority and kind != null:
 		kind.server_end(ev, self)
-	var view: DotDisasterView = _views.get(ev.id)
+	var view: GSDisasterView = _views.get(ev.id)
 	if view != null and is_instance_valid(view):
 		view.queue_free()
 	_views.erase(ev.id)
 	_state.erase(ev.id)
-	DotLog.debug(CHANNEL, "disaster ended", {"kind": ev.kind, "id": ev.id})
+	GSLog.debug(CHANNEL, "disaster ended", {"kind": ev.kind, "id": ev.id})
 	disaster_ended.emit(ev)
 
 
-func _spawn_view(ev: DotDisasterEvent, kind: DotDisasterKind) -> void:
+func _spawn_view(ev: GSDisasterEvent, kind: GSDisasterKind) -> void:
 	if not draws():
 		return
 	var host := world_node()
@@ -307,46 +307,46 @@ func draws() -> bool:
 
 ## A message from the authority. A late joiner is fed [method snapshot] through here.
 ## Refused on the authority itself: a forged `start` from a client must not be able to run.
-func receive(msg: Dictionary) -> DotResult:
+func receive(msg: Dictionary) -> GSResult:
 	if authority:
-		return DotResult.fail(
-			DotError.CODE_FORBIDDEN, "The authority does not take disaster messages."
+		return GSResult.fail(
+			GSError.CODE_FORBIDDEN, "The authority does not take disaster messages."
 		)
 	var t: Variant = msg.get("t", null)
 	if not (t is String):
-		return DotResult.fail(DotError.CODE_PARSE, "A disaster message has no type.")
+		return GSResult.fail(GSError.CODE_PARSE, "A disaster message has no type.")
 	match String(t):
 		"start":
-			var res := DotDisasterEvent.from_wire(msg)
+			var res := GSDisasterEvent.from_wire(msg)
 			if not res.ok:
 				return res.wrap("reading a disaster record")
-			var ev: DotDisasterEvent = res.value
-			var kind: DotDisasterKind = _kinds.get(ev.kind)
+			var ev: GSDisasterEvent = res.value
+			var kind: GSDisasterKind = _kinds.get(ev.kind)
 			if kind == null:
-				return DotResult.fail(
-					DotError.CODE_UNSUPPORTED,
+				return GSResult.fail(
+					GSError.CODE_UNSUPPORTED,
 					"This build has no disaster kind with this id.", String(ev.kind)
 				)
 			var existing := find_event(ev.id)
 			if existing != null:
 				existing.elapsed = ev.elapsed
-				return DotResult.success(existing)
+				return GSResult.success(existing)
 			_begin(ev, kind)
-			return DotResult.success(ev)
+			return GSResult.success(ev)
 		"stop":
 			var found := find_event(int(msg.get("i", -1)))
 			if found == null:
-				return DotResult.fail(DotError.CODE_INVALID, "No such disaster is running.")
+				return GSResult.fail(GSError.CODE_INVALID, "No such disaster is running.")
 			_end(found)
-			return DotResult.success(found)
+			return GSResult.success(found)
 		_:
 			var target := find_event(int(msg.get("i", -1)))
 			if target == null:
-				return DotResult.fail(DotError.CODE_INVALID, "No such disaster is running.", String(t))
-			var kind2: DotDisasterKind = _kinds.get(target.kind)
+				return GSResult.fail(GSError.CODE_INVALID, "No such disaster is running.", String(t))
+			var kind2: GSDisasterKind = _kinds.get(target.kind)
 			if kind2 != null:
 				kind2.on_message(target, msg, self)
-			return DotResult.success(target)
+			return GSResult.success(target)
 
 
 ## The late-join hook: the host calls this once when a player joins, with a callable that
@@ -368,25 +368,25 @@ func send_snapshot(deliver: Callable) -> int:
 ## `manager.wire({"damage": fn, "push": fn, "send": fn, "bodies": fn, "players": fn, "origin": fn})`.
 ## An unknown key is [code]CODE_INVALID[/code] and nothing is assigned, so a typo is not a
 ## silently missing hook.
-func wire(hooks: Dictionary) -> DotResult:
+func wire(hooks: Dictionary) -> GSResult:
 	var names := {
 		"send": "send_fn", "damage": "damage_fn", "push": "player_push_fn",
 		"bodies": "bodies_fn", "players": "players_fn", "origin": "origin_fn",
 	}
 	for key in hooks:
 		if not names.has(String(key)):
-			return DotResult.fail(DotError.CODE_INVALID, "No such disaster hook.", String(key))
+			return GSResult.fail(GSError.CODE_INVALID, "No such disaster hook.", String(key))
 		if not (hooks[key] is Callable):
-			return DotResult.fail(DotError.CODE_INVALID, "A disaster hook must be a Callable.", String(key))
+			return GSResult.fail(GSError.CODE_INVALID, "A disaster hook must be a Callable.", String(key))
 	for key in hooks:
 		set(names[String(key)], hooks[key])
-	return DotResult.success(self)
+	return GSResult.success(self)
 
 
 ## A `damage_fn` that calls `target.<method>(amount)`, for a host whose health lives behind
 ## one method (`hurt`, `apply_damage`). Targets without it are skipped.
 static func damage_via(method: StringName) -> Callable:
-	return func(target: Object, amount: float, _at: Vector3, _ev: DotDisasterEvent) -> void:
+	return func(target: Object, amount: float, _at: Vector3, _ev: GSDisasterEvent) -> void:
 		if is_instance_valid(target) and target.has_method(method):
 			target.call(method, amount)
 
@@ -395,7 +395,7 @@ static func damage_via(method: StringName) -> Callable:
 ## owns its velocity (a push written straight into a prediction-corrected body is undone on
 ## the next correction). Players without it are skipped.
 static func push_via(method: StringName) -> Callable:
-	return func(player: Node3D, dv: Vector3, _ev: DotDisasterEvent) -> void:
+	return func(player: Node3D, dv: Vector3, _ev: GSDisasterEvent) -> void:
 		if is_instance_valid(player) and player.has_method(method):
 			player.call(method, dv)
 
@@ -410,11 +410,11 @@ func snapshot() -> Array[Dictionary]:
 
 
 ## A kind's per-event message (a lightning strike): handled here at once and sent on.
-func broadcast(ev: DotDisasterEvent, msg: Dictionary) -> void:
+func broadcast(ev: GSDisasterEvent, msg: Dictionary) -> void:
 	msg["v"] = 1
 	msg["i"] = ev.id
 	msg["k"] = String(ev.kind)
-	var kind: DotDisasterKind = _kinds.get(ev.kind)
+	var kind: GSDisasterKind = _kinds.get(ev.kind)
 	if kind != null:
 		kind.on_message(ev, msg, self)
 	if authority and send_fn.is_valid():
@@ -436,10 +436,10 @@ func step(delta: float) -> void:
 	_pulses = _pulses.filter(func(p: Array) -> bool: return p[2] < 2.5)
 	for ev in _events.duplicate():
 		ev.elapsed += delta
-		var kind: DotDisasterKind = _kinds.get(ev.kind)
+		var kind: GSDisasterKind = _kinds.get(ev.kind)
 		if authority and kind != null and not ev.is_over():
 			kind.server_tick(ev, delta, self)
-		var view: DotDisasterView = _views.get(ev.id)
+		var view: GSDisasterView = _views.get(ev.id)
 		if view != null and is_instance_valid(view):
 			view.refresh(delta)
 		if ev.is_over():
@@ -448,7 +448,7 @@ func step(delta: float) -> void:
 
 # --- Queries ----------------------------------------------------------------
 
-func active() -> Array[DotDisasterEvent]:
+func active() -> Array[GSDisasterEvent]:
 	return _events.duplicate()
 
 
@@ -463,7 +463,7 @@ func is_active(id: StringName) -> bool:
 	return false
 
 
-func find_event(id: int) -> DotDisasterEvent:
+func find_event(id: int) -> GSDisasterEvent:
 	for ev in _events:
 		if ev.id == id:
 			return ev
@@ -471,13 +471,13 @@ func find_event(id: int) -> DotDisasterEvent:
 
 
 ## The view drawing [param ev] on this machine, or null (headless, or a kind with none).
-func view_of(ev: DotDisasterEvent) -> DotDisasterView:
-	var v: DotDisasterView = _views.get(ev.id)
+func view_of(ev: GSDisasterEvent) -> GSDisasterView:
+	var v: GSDisasterView = _views.get(ev.id)
 	return v if v != null and is_instance_valid(v) else null
 
 
 ## Per-event scratch space, dropped with the event.
-func state(ev: DotDisasterEvent) -> Dictionary:
+func state(ev: GSDisasterEvent) -> Dictionary:
 	return _state.get(ev.id, {})
 
 
@@ -485,7 +485,7 @@ func state(ev: DotDisasterEvent) -> Dictionary:
 func shake_at(at: Vector3) -> float:
 	var best := 0.0
 	for ev in _events:
-		var kind: DotDisasterKind = _kinds.get(ev.kind)
+		var kind: GSDisasterKind = _kinds.get(ev.kind)
 		if kind != null:
 			best = maxf(best, kind.shake_at(ev, at))
 	for p in _pulses:
@@ -503,7 +503,7 @@ func add_shake_pulse(at: Vector3, amount: float) -> void:
 func wind_at(at: Vector3) -> Vector3:
 	var sum := Vector3.ZERO
 	for ev in _events:
-		var kind: DotDisasterKind = _kinds.get(ev.kind)
+		var kind: GSDisasterKind = _kinds.get(ev.kind)
 		if kind != null:
 			sum += kind.wind_at(ev, at)
 	return sum
@@ -587,7 +587,7 @@ func players() -> Array[Node3D]:
 	return out
 
 
-func push_player(player: Node3D, dv: Vector3, ev: DotDisasterEvent) -> void:
+func push_player(player: Node3D, dv: Vector3, ev: GSDisasterEvent) -> void:
 	if player_push_fn.is_valid():
 		player_push_fn.call(player, dv, ev)
 	elif player.has_method("apply_external_velocity"):
@@ -605,7 +605,7 @@ func impulse_body(body: RigidBody3D, impulse: Vector3, at: Vector3) -> void:
 	body.apply_impulse(impulse, at - body.global_position)
 
 
-func damage(target: Object, amount: float, at: Vector3, ev: DotDisasterEvent) -> void:
+func damage(target: Object, amount: float, at: Vector3, ev: GSDisasterEvent) -> void:
 	if amount <= 0.0 or target == null:
 		return
 	if damage_fn.is_valid():
@@ -626,7 +626,7 @@ func raycast(from: Vector3, to: Vector3) -> Dictionary:
 
 
 func describe() -> String:
-	return "DotDisasterManager %s, %d kinds, %d running" % [
+	return "GSDisasterManager %s, %d kinds, %d running" % [
 		"authority" if authority else "client", _kinds.size(), _events.size(),
 	]
 
