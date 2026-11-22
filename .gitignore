@@ -18,8 +18,8 @@ Thumbs.db
 .vscode/
 
 # Linked addons (separate repositories, symlinked in for local development).
-/addons/dot_auth
-/addons/dot_cloud
-/addons/dot_moderation
-/addons/dot_sql
-/addons/dot_voice
+/addons/gs_auth
+/addons/gs_cloud
+/addons/gs_moderation
+/addons/gs_sql
+/addons/gs_voice
