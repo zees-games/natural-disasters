@@ -17,12 +17,12 @@ on:
 
 jobs:
     validate:
-        uses: gamespice-platform/ci/.github/workflows/validate.yml@v1
+        uses: gamespice-platform/ci/.github/workflows/validate.yml@v1.4.0
         secrets:
             DEPS_TOKEN: ${{ secrets.GS_DEPS_TOKEN }}
 
     release:
         needs: validate
-        uses: gamespice-platform/ci/.github/workflows/release.yml@v1
+        uses: gamespice-platform/ci/.github/workflows/release.yml@v1.4.0
         permissions:
             contents: write
